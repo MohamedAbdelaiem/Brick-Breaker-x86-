@@ -1,4 +1,4 @@
-.model small
+.model large
 .stack 100h
 .data
 
@@ -153,7 +153,14 @@ DRAW_RULER PROC
     ret
 DRAW_RULER ENDP
 ;description
+
 MOVE_RULER_RIHGT PROC
+
+
+    CMP X_Ruler_End, 192
+    JGE RIGHT_RULER_EXIT
+
+
     MOV color, 0
     mov ax, X_Ruler_Start
     mov X_Start, ax
@@ -163,11 +170,10 @@ MOVE_RULER_RIHGT PROC
     CALL DRAW_RULER
 
     mov color, 0dh
-    CMP X_Ruler_End, 320
-    JE RIGHT_RULER_EXIT
 
-    ADD X_Ruler_Start, 20
-    ADD X_Ruler_End, 20
+
+    ADD X_Ruler_Start, 1
+    ADD X_Ruler_End, 1
     mov ax, X_Ruler_Start
     mov X_Start, ax
 
@@ -181,8 +187,47 @@ MOVE_RULER_RIHGT PROC
 MOVE_RULER_RIHGT ENDP
 
 
+
+
+
+
+MOVE_RULER_LEFT PROC
+
+    CMP X_Ruler_Start, 120
+    JLE LEFT_RULER_EXIT
+
+
+    MOV color, 0
+    mov ax, X_Ruler_Start
+    mov X_Start, ax
+
+    mov ax, X_Ruler_End
+    mov X_End, ax
+    CALL DRAW_RULER
+
+    mov color, 0dh
+
+
+
+
+    SUB X_Ruler_Start, 1
+    SUB X_Ruler_End, 1
+    mov ax, X_Ruler_Start
+    mov X_Start, ax
+
+    mov ax, X_Ruler_End
+    mov X_End, ax
+
+    CALL DRAW_RULER
+
+    LEFT_RULER_EXIT:
+    ret
+MOVE_RULER_LEFT ENDP
+
+
 ; Draw Game Frame
 DRAW_FRAME PROC
+    ; upper frame
     mov color, 6
     mov X_Start, 5
     mov X_End, 312
@@ -190,14 +235,17 @@ DRAW_FRAME PROC
     mov Y_End, 7
     CALL DRAW_BRICK
 
+    ; left frame
     mov X_Start, 5
     mov X_End, 7
     mov Y_Start, 5
     mov Y_End, 200
     CALL DRAW_BRICK
 
-    mov X_Start, 310
-    mov X_End, 312
+    ; right frame
+
+    mov X_Start, 315
+    mov X_End, 317
     mov Y_Start, 5
     mov Y_End, 200
     CALL DRAW_BRICK
@@ -216,19 +264,41 @@ INIT_GAME ENDP
 MAIN PROC
     mov ax, @data
     mov ds, ax
-
     mov ah, 0
 
     CALL INIT_GAME
 
     ; mov ax, 0FFFFh
+    ; int 16h
+    ; CMP ah, 4Dh
+    ; JE MOVE_RIGHT
+
+    Rulerloop:
     int 16h
-    CMP ah, 4Dh
+    CMP ah, 4Bh
+    JE MOVE_LEFT
+    CMP ah,4Dh
     JE MOVE_RIGHT
-    jnz MAIN_EXIT
+
+    jmp Rulerloop
+
+
+
+
+
+
+    
+
+
 
     MOVE_RIGHT:
         CALL MOVE_RULER_RIHGT
+        jmp Rulerloop
+
+    MOVE_LEFT:
+    CALL MOVE_RULER_LEFT
+    jmp Rulerloop
+     
 
     JMP MAIN_EXIT
 
