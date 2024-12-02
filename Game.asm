@@ -157,7 +157,7 @@ DRAW_RULER ENDP
 MOVE_RULER_RIHGT PROC
 
 
-    CMP X_Ruler_End, 192
+    CMP X_Ruler_End, 315
     JGE RIGHT_RULER_EXIT
 
 
@@ -172,8 +172,8 @@ MOVE_RULER_RIHGT PROC
     mov color, 0dh
 
 
-    ADD X_Ruler_Start, 1
-    ADD X_Ruler_End, 1
+    ADD X_Ruler_Start, 5
+    ADD X_Ruler_End, 5
     mov ax, X_Ruler_Start
     mov X_Start, ax
 
@@ -193,7 +193,7 @@ MOVE_RULER_RIHGT ENDP
 
 MOVE_RULER_LEFT PROC
 
-    CMP X_Ruler_Start, 120
+    CMP X_Ruler_Start, 10
     JLE LEFT_RULER_EXIT
 
 
@@ -210,8 +210,8 @@ MOVE_RULER_LEFT PROC
 
 
 
-    SUB X_Ruler_Start, 1
-    SUB X_Ruler_End, 1
+    SUB X_Ruler_Start, 5
+    SUB X_Ruler_End, 5
     mov ax, X_Ruler_Start
     mov X_Start, ax
 
@@ -237,7 +237,7 @@ DRAW_FRAME PROC
 
     ; left frame
     mov X_Start, 5
-    mov X_End, 7
+    mov X_End, 10
     mov Y_Start, 5
     mov Y_End, 200
     CALL DRAW_BRICK
@@ -245,7 +245,7 @@ DRAW_FRAME PROC
     ; right frame
 
     mov X_Start, 315
-    mov X_End, 317
+    mov X_End, 320
     mov Y_Start, 5
     mov Y_End, 200
     CALL DRAW_BRICK
@@ -293,10 +293,12 @@ MAIN PROC
 
     MOVE_RIGHT:
         CALL MOVE_RULER_RIHGT
+        mov ah,0
         jmp Rulerloop
 
     MOVE_LEFT:
     CALL MOVE_RULER_LEFT
+    mov ah,0
     jmp Rulerloop
      
 
