@@ -301,9 +301,12 @@ GET_BRICK_X_Y PROC
 GET_BRICK_X_Y ENDP
 
 ;description
+Destroy_Brick PROC
+    CALL GET_BRICK_X_Y
+    ret
+Destroy_Brick ENDP
 
-
-
+;description
 DRAW_RULER PROC
     PUSH AX
     mov ax, X_Ruler_Start
@@ -322,11 +325,8 @@ DRAW_RULER ENDP
 ;description
 
 MOVE_RULER_RIHGT PROC
-
-
     CMP X_Ruler_End, 315
     JGE RIGHT_RULER_EXIT
-
 
     MOV color, 0
     mov ax, X_Ruler_Start
@@ -363,7 +363,6 @@ MOVE_RULER_LEFT PROC
     CMP X_Ruler_Start, 10
     JLE LEFT_RULER_EXIT
 
-
     MOV color, 0
     mov ax, X_Ruler_Start
     mov X_Start, ax
@@ -373,9 +372,6 @@ MOVE_RULER_LEFT PROC
     CALL DRAW_RULER
 
     mov color, 0dh
-
-
-
 
     SUB X_Ruler_Start, 5
     SUB X_Ruler_End, 5
@@ -440,10 +436,10 @@ MAIN PROC
     ; CMP ah, 4Dh
     ; JE MOVE_RIGHT
 
-    mov x, 61
+    mov x, 20
     mov y, 35
 
-    CALL GET_BRICK_X_Y
+    CALL Destroy_Brick
 
     Rulerloop:
     int 16h
