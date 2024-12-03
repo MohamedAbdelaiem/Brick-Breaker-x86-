@@ -7,6 +7,12 @@ X_Ruler_End dw 190
 Y_Ruler_Start dw 185
 Y_Ruler_End dw 190
 
+X_Start_Bricks dw 20, 80, 140, 200, 260
+X_End_Bricks dw 60, 120, 180, 240, 300
+
+Y_Start_Bricks dw 30, 50, 70
+Y_End_Bricks dw 40, 60, 80
+
 X_Start dw 0
 X_End dw 0
 Y_Start dw 0
@@ -15,7 +21,17 @@ Y_End dw 0
 X_Range dw 0
 Y_Range dw 0
 
+X_Start_Destroyed_Brick dw 0
+X_End_Destroyed_Brick dw 0
+
+Y_Start_Destroyed_Brick dw 0
+Y_End_Destroyed_Brick dw 0
+
+color_palette db 0bh, 0eh, 0ch
 color db 0fh
+
+x db 0
+y db 0
 
 .code
 
@@ -95,51 +111,201 @@ DRAW_BRICK PROC
 DRAW_BRICK ENDP
 
 DRAW_BRICK_ROW PROC
-    
-    mov X_Start, 20
-    mov X_End, 60
-    CALL DRAW_BRICK
+    push SI
+    push DI
 
-    mov X_Start, 80
-    mov X_End, 120
-    CALL DRAW_BRICK
+    LEA SI, X_Start_Bricks
+    LEA DI, X_End_Bricks
 
-    mov X_Start, 140
-    mov X_End, 180
-    CALL DRAW_BRICK
+    push cx
+    push ax
+    mov cx, 5
+    Draw_Row_Bricks:
+        mov ax, [SI]
+        mov X_Start, ax
+        mov ax, [DI]
+        mov X_End, ax
+        CALL DRAW_BRICK
+        ADD SI, 2
+        ADD DI, 2
+        Loop Draw_Row_Bricks
+    pop ax
+    pop cx
 
-    mov X_Start, 200
-    mov X_End, 240
-    CALL DRAW_BRICK
-
-    mov X_Start, 260
-    mov X_End, 300
-    CALL DRAW_BRICK
+    POP DI
+    POP SI
 
     ret
 DRAW_BRICK_ROW ENDP
 
 INIT_BRICKS PROC
-    mov Y_Start, 30
-    mov Y_End, 40
-    mov color, 0bh
-    CALL DRAW_BRICK_ROW
-    
-    mov Y_Start, 50
-    mov Y_End, 60
-    mov color, 0eh
-    CALL DRAW_BRICK_ROW
+    PUSH SI
+    PUSH DI
 
-    mov Y_Start, 70
-    mov Y_End, 80
-    mov color, 0ch
-    CALL DRAW_BRICK_ROW
+    PUSH BX
+
+    LEA SI, Y_Start_Bricks
+    LEA DI, Y_End_Bricks
+    LEA BX, color_palette
+
+    push cx
+    push ax
+
+    mov cx, 3
+    Draw_Col_Bricks:
+        mov al, [BX]
+        mov color, al
+        mov ax, [SI]
+        mov Y_Start, ax
+        mov ax, [DI]
+        mov Y_End, ax
+        CALL DRAW_BRICK_ROW
+        ADD SI, 2
+        ADD DI, 2
+        INC BX
+        Loop Draw_Col_Bricks
+
+    pop ax
+    pop cx
+
+    POP BX
+
+    POP DI
+    POP SI
+
+    ; mov Y_Start, 30
+    ; mov Y_End, 40
+    ; mov color, 0bh
+    ; CALL DRAW_BRICK_ROW
+    
+    ; mov Y_Start, 50
+    ; mov Y_End, 60
+    ; mov color, 0eh
+    ; CALL DRAW_BRICK_ROW
+
+    ; mov Y_Start, 70
+    ; mov Y_End, 80
+    ; mov color, 0ch
+    ; CALL DRAW_BRICK_ROW
 
     ret
 INIT_BRICKS ENDP
 
 
+;description
+Draw_DestroyBrick PROC
+    PUSH ax
+    mov color, 0
+    mov ax, X_Start_Destroyed_Brick
+    mov X_Start, ax
+    mov ax, X_End_Destroyed_Brick
+    mov X_End, ax
+
+    mov ax, Y_Start_Destroyed_Brick
+    mov Y_Start, ax
+    mov ax, Y_End_Destroyed_Brick
+    mov Y_End, ax
+
+    CALL DRAW_BRICK
+
+    POP ax
+    ret
+Draw_DestroyBrick ENDP
+
+GET_BRICK_Y PROC
+    PUSH SI
+    PUSH DI
+
+    PUSH CX
+
+    ; get X_Start and X_End
+    LEA SI, Y_Start_Bricks
+    LEA DI, Y_End_Bricks
+
+    mov ah, y
+    mov cx, 3
+    Find_Y:
+        CMP ah, [SI]
+        JGE Check_Y_End
+        JL GET_BRICK_Y_Destroy_Exit
+
+    Check_Y_End:
+        CMP ah, [DI]
+        JLE GET_BRICK_Y_Answer
+        ADD SI, 2
+        ADD DI, 2
+        LOOP Find_Y
+    
+    JMP GET_BRICK_Y_Destroy_Exit
+
+    GET_BRICK_Y_Answer:
+        mov ax, [SI]
+        mov Y_Start_Destroyed_Brick, ax
+        mov bx, [DI]
+        mov Y_End_Destroyed_Brick, bx
+        CALL Draw_DestroyBrick
+
+    GET_BRICK_Y_Destroy_Exit:
+
+    POP CX
+
+    POP SI
+    POP DI
+
+    ret
+GET_BRICK_Y ENDP
+
+;description
+GET_BRICK_X_Y PROC
+    PUSH SI
+    PUSH DI
+
+    PUSH CX
+
+    ; get X_Start and X_End
+    LEA SI, X_Start_Bricks
+    LEA DI, X_End_Bricks
+
+    mov ah, x
+    mov cx, 5
+    Find_X:
+        CMP ah, [SI]
+        JGE Check_X_End
+        JL GET_BRICK_X_Answer_Destroy_Exit
+
+    Check_X_End:
+        CMP ah, [DI]
+        JLE GET_BRICK_X_Answer
+        ADD SI, 2
+        ADD DI, 2
+        LOOP Find_X
+
+    JMP GET_BRICK_X_Answer_Destroy_Exit
+    
+    GET_BRICK_X_Answer:
+        mov ax, [SI]
+        mov X_Start_Destroyed_Brick, ax
+        mov bx, [DI]
+        mov X_End_Destroyed_Brick, bx
+        CALL GET_BRICK_Y
+
+
+    GET_BRICK_X_Answer_Destroy_Exit:
+
+    POP CX
+
+    POP SI
+    POP DI
+
+    ret
+GET_BRICK_X_Y ENDP
+
+;description
+
+
+
 DRAW_RULER PROC
+    PUSH AX
     mov ax, X_Ruler_Start
     mov X_Start, ax
 
@@ -150,6 +316,7 @@ DRAW_RULER PROC
     mov Y_End, 190
 
     CALL DRAW_BRICK
+    POP AX
     ret
 DRAW_RULER ENDP
 ;description
@@ -230,7 +397,7 @@ DRAW_FRAME PROC
     ; upper frame
     mov color, 6
     mov X_Start, 5
-    mov X_End, 312
+    mov X_End, 315
     mov Y_Start, 5
     mov Y_End, 7
     CALL DRAW_BRICK
@@ -273,6 +440,11 @@ MAIN PROC
     ; CMP ah, 4Dh
     ; JE MOVE_RIGHT
 
+    mov x, 61
+    mov y, 35
+
+    CALL GET_BRICK_X_Y
+
     Rulerloop:
     int 16h
     CMP ah, 4Bh
@@ -281,15 +453,6 @@ MAIN PROC
     JE MOVE_RIGHT
 
     jmp Rulerloop
-
-
-
-
-
-
-    
-
-
 
     MOVE_RIGHT:
         CALL MOVE_RULER_RIHGT
