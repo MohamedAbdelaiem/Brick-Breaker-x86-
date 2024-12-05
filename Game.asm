@@ -32,6 +32,15 @@ color db 0fh
 
 x db 0
 y db 0
+    time_aux        DB 0
+	ball_x          DW 160
+	ball_y          DW 100
+	ball_size       DW 5
+	ball_velocity_x DW 05h
+	ball_velocity_y DW 02h
+    WINDOW_WIDTH    DW 320
+	WINDOW_HEIGHT   DW 200
+	WINDOW_BORDER   DW 5
 
 .code
 
@@ -325,7 +334,11 @@ DRAW_RULER ENDP
 ;description
 
 MOVE_RULER_RIHGT PROC
-    CMP X_Ruler_End, 315
+    push ax
+
+    mov ax ,WINDOW_WIDTH
+    sub ax , WINDOW_BORDER
+    CMP X_Ruler_End, ax
     JGE RIGHT_RULER_EXIT
 
     MOV color, 0
@@ -334,7 +347,7 @@ MOVE_RULER_RIHGT PROC
 
     mov ax, X_Ruler_End
     mov X_End, ax
-    CALL DRAW_RULER
+    ; CALL DRAW_RULER
 
     mov color, 0dh
 
@@ -347,9 +360,11 @@ MOVE_RULER_RIHGT PROC
     mov ax, X_Ruler_End
     mov X_End, ax
 
-    CALL DRAW_RULER
+   ; CALL DRAW_RULER
 
     RIGHT_RULER_EXIT:
+
+    pop ax
     ret
 MOVE_RULER_RIHGT ENDP
 
@@ -359,8 +374,10 @@ MOVE_RULER_RIHGT ENDP
 
 
 MOVE_RULER_LEFT PROC
+    push ax
 
-    CMP X_Ruler_Start, 10
+    mov ax , WINDOW_BORDER
+    CMP X_Ruler_Start, ax
     JLE LEFT_RULER_EXIT
 
     MOV color, 0
@@ -369,7 +386,7 @@ MOVE_RULER_LEFT PROC
 
     mov ax, X_Ruler_End
     mov X_End, ax
-    CALL DRAW_RULER
+   ; CALL DRAW_RULER
 
     mov color, 0dh
 
@@ -381,48 +398,141 @@ MOVE_RULER_LEFT PROC
     mov ax, X_Ruler_End
     mov X_End, ax
 
-    CALL DRAW_RULER
+    ;CALL DRAW_RULER
 
     LEFT_RULER_EXIT:
+
+
+    pop ax
     ret
 MOVE_RULER_LEFT ENDP
 
 
 ; Draw Game Frame
 DRAW_FRAME PROC
+    push ax
     ; upper frame
     mov color, 6
-    mov X_Start, 5
-    mov X_End, 315
-    mov Y_Start, 5
-    mov Y_End, 7
+    mov X_Start, 0
+    mov ax,WINDOW_WIDTH
+    mov X_End, ax
+    mov Y_Start, 0
+    mov ax,WINDOW_BORDER
+    mov Y_End, ax
     CALL DRAW_BRICK
 
     ; left frame
-    mov X_Start, 5
-    mov X_End, 10
+    mov X_Start, 0
+    mov ax,WINDOW_BORDER
+    mov X_End, ax
     mov Y_Start, 5
-    mov Y_End, 200
+    mov ax , WINDOW_HEIGHT
+    mov Y_End, ax
     CALL DRAW_BRICK
 
     ; right frame
-
-    mov X_Start, 315
-    mov X_End, 320
-    mov Y_Start, 5
-    mov Y_End, 200
+    mov ax , WINDOW_WIDTH
+    mov X_End,ax
+    sub ax ,WINDOW_BORDER
+    mov X_Start, ax
+    mov Y_Start, 0
+    mov ax,WINDOW_HEIGHT
+    mov Y_End, ax
     CALL DRAW_BRICK
+
+    pop ax
     ret
 DRAW_FRAME ENDP
+
+Draw_Ball Proc	NEAR
+	
+	                     mov  cx, ball_x          	; X coordinate
+	                     mov  dx, ball_y          	; Y coordinate
+	
+	
+	Draw_Ball_Horziontal:
+	                     mov  ah, 0Ch             	; Function to plot pixel
+	                     mov  al, 0Ah             	; White color (0Fh)
+	                     mov  bh, 0               	; Page number 0
+	                     int  10h
+	                     inc  cx
+	                     mov  ax,cx
+	                     sub  ax,ball_x
+	                     cmp  ax,ball_size
+	                     JNG  Draw_Ball_Horziontal
+	                     mov  cx,ball_x
+	                     inc  dx
+	                     mov  ax,dx
+	                     sub  ax,ball_y
+	                     cmp  ax,ball_size
+	                     JNG  Draw_Ball_Horziontal
+	
+	                     ret
+Draw_Ball endp
+
+MOVE_BALL Proc NEAR
+	                     mov  ax,ball_velocity_x
+	                     add  ball_x,ax
+	                     
+	                     MOV  ax,WINDOW_BORDER
+	                     CMP  ball_x,ax
+	                     JL   NEG_X
+	                     
+	                     MOV  ax,WINDOW_WIDTH
+	                     SUB  ax,WINDOW_BORDER
+	                     CMP  ball_x,ax
+	                     JG   NEG_X
+
+	                     mov  ax,ball_velocity_y
+	                     add  ball_y,ax
+	                     
+	                     MOV  ax,WINDOW_BORDER
+	                     CMP  ball_y,ax
+	                     JL   NEG_Y
+	                     
+	                     MOV  ax,WINDOW_HEIGHT
+	                     SUB  ax,WINDOW_BORDER
+	                     CMP  ball_y,ax
+	                     JG   NEG_Y
+
+	                     ret
+
+	NEG_X:               
+	                     NEG  ball_velocity_x
+	                     ret
+	NEG_Y:               
+	                     NEG  ball_velocity_y
+	                     ret
+MOVE_BALL endp
+
+
+
 INIT_GAME PROC
     SET_VIDEO_MODE
     CALL INIT_BRICKS
     mov color, 0dh
     CALL DRAW_RULER
     CALL DRAW_FRAME
+    CALL MOVE_BALL
+	call Draw_Ball
     ret
 INIT_GAME ENDP
 
+CLEAR_SCREEN Proc NEAR
+	; Open graphical mode 13h (320x200, 256 colors)
+    push ax
+    push bx
+	                     mov  al, 13h
+	                     mov  ah, 0
+	                     int  10h
+
+	                     MOV  AH,0bh
+	                     mov  bx,00
+	                     int  10h
+    pop bx
+    pop AX
+	                     ret
+CLEAR_SCREEN endp
 
 MAIN PROC
     mov ax, @data
