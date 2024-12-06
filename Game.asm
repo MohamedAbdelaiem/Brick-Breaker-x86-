@@ -30,14 +30,16 @@ Y_End_Destroyed_Brick dw 0
 color_palette db 0bh, 0eh, 0ch
 color db 0fh
 
-x db 0
-y db 0
+x dw 0
+y dw 0
+DESTROYED_BRICKS DW 0
+
     time_aux        DB 0
 	ball_x          DW 160
-	ball_y          DW 100
+	ball_y          DW 170
 	ball_size       DW 5
-	ball_velocity_x DW 05h
-	ball_velocity_y DW 02h
+	ball_velocity_x DW 01h
+	ball_velocity_y DW 01h
     WINDOW_WIDTH    DW 320
 	WINDOW_HEIGHT   DW 200
 	WINDOW_BORDER   DW 5
@@ -89,14 +91,14 @@ DRAW_VERTICAL_LINE PROC
     push cx
     push dx
     push bx
-    mov dx, Y_Start
-    Vertical_Line_Loop:
-        push dx
-        DrawPixel X_Start, dx, color
-        pop dx
-        INC dx
-        CMP dx, Y_End
-        JNE Vertical_Line_Loop
+        mov dx, Y_Start
+        Vertical_Line_Loop:
+            push dx
+            DrawPixel X_Start, dx, color
+            pop dx
+            INC dx
+            CMP dx, Y_End
+            JNE Vertical_Line_Loop
     pop bx
     pop dx
     pop cx
@@ -204,19 +206,21 @@ INIT_BRICKS ENDP
 ;description
 Draw_DestroyBrick PROC
     PUSH ax
-    mov color, 0
-    mov ax, X_Start_Destroyed_Brick
-    mov X_Start, ax
-    mov ax, X_End_Destroyed_Brick
-    mov X_End, ax
+        mov color, 0
+        mov ax, X_Start_Destroyed_Brick
+        mov X_Start, ax
+        mov ax, X_End_Destroyed_Brick
+        mov X_End, ax
 
-    mov ax, Y_Start_Destroyed_Brick
-    mov Y_Start, ax
-    mov ax, Y_End_Destroyed_Brick
-    mov Y_End, ax
+        mov ax, Y_Start_Destroyed_Brick
+        mov Y_Start, ax
+        mov ax, Y_End_Destroyed_Brick
+        mov Y_End, ax
 
-    CALL DRAW_BRICK
+        NEG ball_velocity_y
 
+
+        CALL DRAW_BRICK
     POP ax
     ret
 Draw_DestroyBrick ENDP
@@ -224,40 +228,41 @@ Draw_DestroyBrick ENDP
 GET_BRICK_Y PROC
     PUSH SI
     PUSH DI
-
     PUSH CX
+    PUSH BX
+    PUSH AX
 
-    ; get X_Start and X_End
-    LEA SI, Y_Start_Bricks
-    LEA DI, Y_End_Bricks
+        ; get X_Start and X_End
+        LEA SI, Y_Start_Bricks
+        LEA DI, Y_End_Bricks
 
-    mov ah, y
-    mov cx, 3
-    Find_Y:
-        CMP ah, [SI]
-        JGE Check_Y_End
-        JL GET_BRICK_Y_Destroy_Exit
+        mov ax, y
+        mov cx, 3
+        Find_Y:
+            CMP ax, [SI]
+            JGE Check_Y_End
+            JL GET_BRICK_Y_Destroy_Exit
 
-    Check_Y_End:
-        CMP ah, [DI]
-        JLE GET_BRICK_Y_Answer
-        ADD SI, 2
-        ADD DI, 2
-        LOOP Find_Y
-    
-    JMP GET_BRICK_Y_Destroy_Exit
+        Check_Y_End:
+            CMP ax, [DI]
+            JLE GET_BRICK_Y_Answer
+            ADD SI, 2
+            ADD DI, 2
+            LOOP Find_Y
+        
+        JMP GET_BRICK_Y_Destroy_Exit
 
-    GET_BRICK_Y_Answer:
-        mov ax, [SI]
-        mov Y_Start_Destroyed_Brick, ax
-        mov bx, [DI]
-        mov Y_End_Destroyed_Brick, bx
-        CALL Draw_DestroyBrick
+        GET_BRICK_Y_Answer:
+            mov ax, [SI]
+            mov Y_Start_Destroyed_Brick, ax
+            mov bx, [DI]
+            mov Y_End_Destroyed_Brick, bx
+            CALL Draw_DestroyBrick
 
     GET_BRICK_Y_Destroy_Exit:
-
+    POP ax
+    POP BX
     POP CX
-
     POP SI
     POP DI
 
@@ -268,22 +273,23 @@ GET_BRICK_Y ENDP
 GET_BRICK_X_Y PROC
     PUSH SI
     PUSH DI
-
     PUSH CX
+    PUSH BX
+    PUSH AX
 
     ; get X_Start and X_End
     LEA SI, X_Start_Bricks
     LEA DI, X_End_Bricks
 
-    mov ah, x
+    mov ax, x
     mov cx, 5
     Find_X:
-        CMP ah, [SI]
+        CMP ax, [SI]
         JGE Check_X_End
         JL GET_BRICK_X_Answer_Destroy_Exit
 
     Check_X_End:
-        CMP ah, [DI]
+        CMP ax, [DI]
         JLE GET_BRICK_X_Answer
         ADD SI, 2
         ADD DI, 2
@@ -301,8 +307,9 @@ GET_BRICK_X_Y PROC
 
     GET_BRICK_X_Answer_Destroy_Exit:
 
+    POP AX
+    POP BX
     POP CX
-
     POP SI
     POP DI
 
@@ -312,22 +319,32 @@ GET_BRICK_X_Y ENDP
 ;description
 Destroy_Brick PROC
     CALL GET_BRICK_X_Y
+    ; CMP DESTROYED_BRICKS, 15
+    ; JGE EXIT_DESTROY
+    ; ret
+
+    ; EXIT_DESTROY:   
+    ;     MOV AH,4ch
+    ;     INT 21h
+    
     ret
 Destroy_Brick ENDP
+
+
 
 ;description
 DRAW_RULER PROC
     PUSH AX
-    mov ax, X_Ruler_Start
-    mov X_Start, ax
+        mov ax, X_Ruler_Start
+        mov X_Start, ax
 
-    mov ax, X_Ruler_End
-    mov X_End, ax
-    
-    mov Y_Start, 185
-    mov Y_End, 190
+        mov ax, X_Ruler_End
+        mov X_End, ax
+        
+        mov Y_Start, 185
+        mov Y_End, 190
 
-    CALL DRAW_BRICK
+        CALL DRAW_BRICK
     POP AX
     ret
 DRAW_RULER ENDP
@@ -336,31 +353,31 @@ DRAW_RULER ENDP
 MOVE_RULER_RIHGT PROC
     push ax
 
-    mov ax ,WINDOW_WIDTH
-    sub ax , WINDOW_BORDER
-    CMP X_Ruler_End, ax
-    JGE RIGHT_RULER_EXIT
+        mov ax ,WINDOW_WIDTH
+        sub ax , WINDOW_BORDER
+        CMP X_Ruler_End, ax
+        JGE RIGHT_RULER_EXIT
 
-    MOV color, 0
-    mov ax, X_Ruler_Start
-    mov X_Start, ax
+        MOV color, 0
+        mov ax, X_Ruler_Start
+        mov X_Start, ax
 
-    mov ax, X_Ruler_End
-    mov X_End, ax
-    ; CALL DRAW_RULER
+        mov ax, X_Ruler_End
+        mov X_End, ax
+        CALL DRAW_RULER
 
-    mov color, 0dh
+        mov color, 0dh
 
 
-    ADD X_Ruler_Start, 5
-    ADD X_Ruler_End, 5
-    mov ax, X_Ruler_Start
-    mov X_Start, ax
+        ADD X_Ruler_Start, 5
+        ADD X_Ruler_End, 5
+        mov ax, X_Ruler_Start
+        mov X_Start, ax
 
-    mov ax, X_Ruler_End
-    mov X_End, ax
+        mov ax, X_Ruler_End
+        mov X_End, ax
 
-   ; CALL DRAW_RULER
+    CALL DRAW_RULER
 
     RIGHT_RULER_EXIT:
 
@@ -376,33 +393,31 @@ MOVE_RULER_RIHGT ENDP
 MOVE_RULER_LEFT PROC
     push ax
 
-    mov ax , WINDOW_BORDER
-    CMP X_Ruler_Start, ax
-    JLE LEFT_RULER_EXIT
+        mov ax , WINDOW_BORDER
+        CMP X_Ruler_Start, ax
+        JLE LEFT_RULER_EXIT
 
-    MOV color, 0
-    mov ax, X_Ruler_Start
-    mov X_Start, ax
+        MOV color, 0
+        mov ax, X_Ruler_Start
+        mov X_Start, ax
 
-    mov ax, X_Ruler_End
-    mov X_End, ax
-   ; CALL DRAW_RULER
+        mov ax, X_Ruler_End
+        mov X_End, ax
+        CALL DRAW_RULER
 
-    mov color, 0dh
+        mov color, 0dh
 
-    SUB X_Ruler_Start, 5
-    SUB X_Ruler_End, 5
-    mov ax, X_Ruler_Start
-    mov X_Start, ax
+        SUB X_Ruler_Start, 5
+        SUB X_Ruler_End, 5
+        mov ax, X_Ruler_Start
+        mov X_Start, ax
 
-    mov ax, X_Ruler_End
-    mov X_End, ax
+        mov ax, X_Ruler_End
+        mov X_End, ax
 
-    ;CALL DRAW_RULER
+        CALL DRAW_RULER
 
     LEFT_RULER_EXIT:
-
-
     pop ax
     ret
 MOVE_RULER_LEFT ENDP
@@ -411,40 +426,44 @@ MOVE_RULER_LEFT ENDP
 ; Draw Game Frame
 DRAW_FRAME PROC
     push ax
-    ; upper frame
-    mov color, 6
-    mov X_Start, 0
-    mov ax,WINDOW_WIDTH
-    mov X_End, ax
-    mov Y_Start, 0
-    mov ax,WINDOW_BORDER
-    mov Y_End, ax
-    CALL DRAW_BRICK
+        ; upper frame
+        mov color, 6
+        mov X_Start, 0
+        mov ax,WINDOW_WIDTH
+        mov X_End, ax
+        mov Y_Start, 0
+        mov ax,WINDOW_BORDER
+        mov Y_End, ax
+        CALL DRAW_BRICK
 
-    ; left frame
-    mov X_Start, 0
-    mov ax,WINDOW_BORDER
-    mov X_End, ax
-    mov Y_Start, 5
-    mov ax , WINDOW_HEIGHT
-    mov Y_End, ax
-    CALL DRAW_BRICK
+        ; left frame
+        mov X_Start, 0
+        mov ax,WINDOW_BORDER
+        mov X_End, ax
+        mov Y_Start, 5
+        mov ax , WINDOW_HEIGHT
+        mov Y_End, ax
+        CALL DRAW_BRICK
 
-    ; right frame
-    mov ax , WINDOW_WIDTH
-    mov X_End,ax
-    sub ax ,WINDOW_BORDER
-    mov X_Start, ax
-    mov Y_Start, 0
-    mov ax,WINDOW_HEIGHT
-    mov Y_End, ax
-    CALL DRAW_BRICK
+        ; right frame
+        mov ax , WINDOW_WIDTH
+        mov X_End,ax
+        sub ax ,WINDOW_BORDER
+        mov X_Start, ax
+        mov Y_Start, 0
+        mov ax,WINDOW_HEIGHT
+        mov Y_End, ax
+        CALL DRAW_BRICK
 
     pop ax
     ret
 DRAW_FRAME ENDP
 
-Draw_Ball Proc	NEAR
+Draw_Ball Proc
+    push ax
+    push bx
+    push cx
+    push dx
 	
 	                     mov  cx, ball_x          	; X coordinate
 	                     mov  dx, ball_y          	; Y coordinate
@@ -466,15 +485,49 @@ Draw_Ball Proc	NEAR
 	                     sub  ax,ball_y
 	                     cmp  ax,ball_size
 	                     JNG  Draw_Ball_Horziontal
-	
+	pop dx
+    pop cx
+    pop bx
+    pop ax
 	                     ret
 Draw_Ball endp
 
-MOVE_BALL Proc NEAR
+MOVE_BALL Proc 
+    PUSH ax
 	                     mov  ax,ball_velocity_x
 	                     add  ball_x,ax
+
+                         MOV AX,ball_x
+                         ADD AX,ball_size
+                         MOV X,AX
+                         MOV AX,ball_y
+                         ADD AX,ball_size
+                         MOV Y,AX
+
+                         CALL Destroy_Brick
+
+                         MOV AX,ball_x
+                         MOV X,AX
+                         MOV AX,ball_y
+                         MOV Y,AX
+
+                         CALL Destroy_Brick
+
+                        ;  CMP DESTROYED_BRICKS, 15
+                        ;  JGE CLOSE_BALL
+
+
+                         MOV AX,ball_y
+                         ADD AX,ball_size
+                         CMP AX,WINDOW_HEIGHT
+                         JGE  CLOSE_BALL
+                         CMP AX,Y_Ruler_Start
+                         JGE CHECK_x_START_Ruler
+                         
+                         
 	                     
-	                     MOV  ax,WINDOW_BORDER
+	                cmp_border:     
+                         MOV  ax,WINDOW_BORDER
 	                     CMP  ball_x,ax
 	                     JL   NEG_X
 	                     
@@ -494,17 +547,98 @@ MOVE_BALL Proc NEAR
 	                     SUB  ax,WINDOW_BORDER
 	                     CMP  ball_y,ax
 	                     JG   NEG_Y
-
+    pop ax
 	                     ret
 
 	NEG_X:               
 	                     NEG  ball_velocity_x
+                         pop ax
 	                     ret
 	NEG_Y:               
 	                     NEG  ball_velocity_y
+                         pop ax
 	                     ret
+    CHECK_x_START_Ruler:
+                       MOV AX,ball_x
+                       CMP AX,X_Ruler_Start
+                       JGE CHECK_x_end_Ruler
+                       JMP cmp_border
+    CHECK_x_end_Ruler:
+                       MOV AX,ball_x
+                       CMP AX,X_Ruler_End
+                       JLE NEG_X_Y 
+                       JMP cmp_border 
+    NEG_X_Y:
+                ; NEG ball_velocity_x
+                NEG ball_velocity_y
+                ; Move the ball slightly away from the ruler's edge
+                MOV AX, ball_velocity_x
+                ADD ball_x, AX
+                MOV AX, ball_velocity_y
+                ADD ball_y, AX
+                pop ax
+                ret
+    CLOSE_BALL:
+                mov ah,4ch
+                int 21h
+                pop ax
+                ret                                             
 MOVE_BALL endp
 
+DELETE_BALL Proc 
+    push ax
+    push bx
+    push cx
+    push dx
+	
+	                     mov  cx, ball_x          	; X coordinate
+	                     mov  dx, ball_y          	; Y coordinate
+	
+	
+	Draw_Ball_HorziontalFORDELETE:
+	                     mov  ah, 0Ch             	; Function to plot pixel
+	                     mov  al, 0             	; White color (0Fh)
+	                     mov  bh, 0               	; Page number 0
+	                     int  10h
+	                     inc  cx
+	                     mov  ax,cx
+	                     sub  ax,ball_x
+	                     cmp  ax,ball_size
+	                     JNG  Draw_Ball_HorziontalFORDELETE
+	                     mov  cx,ball_x
+	                     inc  dx
+	                     mov  ax,dx
+	                     sub  ax,ball_y
+	                     cmp  ax,ball_size
+	                     JNG  Draw_Ball_HorziontalFORDELETE
+	pop dx
+    pop cx
+    pop bx
+    pop ax
+ret
+DELETE_BALL endp
+
+
+
+Main_Ball_loop PROC 
+    push ax
+    push bx
+    push cx
+    push dx
+
+        CALL DELETE_BALL
+        CALL MOVE_BALL
+        CALL Draw_Ball
+        CALL DRAW_FRAME
+        mov color, 0dh
+        CALL DRAW_RULER
+
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+ret
+Main_Ball_loop ENDP
 
 
 INIT_GAME PROC
@@ -534,41 +668,69 @@ CLEAR_SCREEN Proc NEAR
 	                     ret
 CLEAR_SCREEN endp
 
+
+
 MAIN PROC
     mov ax, @data
     mov ds, ax
-    mov ah, 0
 
+    mov ah, 0
     CALL INIT_GAME
+
 
     ; mov ax, 0FFFFh
     ; int 16h
     ; CMP ah, 4Dh
     ; JE MOVE_RIGHT
 
-    mov x, 20
-    mov y, 35
+    ; mov x, 20
+    ; mov y, 35
 
-    CALL Destroy_Brick
+    ; CALL Destroy_Brick
+    
+    ; mov ah,1
+
+    startLoop:
+        mov ah, 00h        ; Get key press
+        int 16h
+
+        ; Check if the key pressed is Spacebar (ASCII code 0x20)
+        cmp al, 20h        ; Compare with 0x20 (Spacebar), use al for ASCII value
+        je Rulerloop       ; Jump to Rulerloop if Spacebar is pressed
+
+skipKeyPressStartLOOP:
+        jmp startLoop      ; If no key pressed, continue checking for key presses
+
+
+    
+
 
     Rulerloop:
-    int 16h
-    CMP ah, 4Bh
-    JE MOVE_LEFT
-    CMP ah,4Dh
-    JE MOVE_RIGHT
+        
+        CALL Main_Ball_loop
+        mov ah, 01h        ; Check if a key is available
+        int 16h
+        jz SkipKeyPress    ; If no key pressed, skip key handling
 
-    jmp Rulerloop
+        mov ah, 00h        ; Get key press
+        int 16h
+        cmp ah, 4Bh        ; Check if left arrow key
+        je MOVE_LEFT
+        cmp ah, 4Dh        ; Check if right arrow key
+        je MOVE_RIGHT
 
-    MOVE_RIGHT:
-        CALL MOVE_RULER_RIHGT
-        mov ah,0
+        SkipKeyPress:
+            jmp Rulerloop
+
+        MOVE_RIGHT:
+            CALL MOVE_RULER_RIHGT
+            mov ah,1
+            jmp Rulerloop
+
+        MOVE_LEFT:
+        CALL MOVE_RULER_LEFT
+        mov ah,1
         jmp Rulerloop
-
-    MOVE_LEFT:
-    CALL MOVE_RULER_LEFT
-    mov ah,0
-    jmp Rulerloop
      
 
     JMP MAIN_EXIT
