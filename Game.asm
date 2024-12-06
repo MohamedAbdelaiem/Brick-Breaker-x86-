@@ -529,24 +529,24 @@ MOVE_BALL Proc
 	                cmp_border:     
                          MOV  ax,WINDOW_BORDER
 	                     CMP  ball_x,ax
-	                     JL   NEG_X
+	                     JLE   NEG_X
 	                     
 	                     MOV  ax,WINDOW_WIDTH
 	                     SUB  ax,WINDOW_BORDER
 	                     CMP  ball_x,ax
-	                     JG   NEG_X
+	                     JGE   NEG_X
 
 	                     mov  ax,ball_velocity_y
 	                     add  ball_y,ax
 	                     
 	                     MOV  ax,WINDOW_BORDER
 	                     CMP  ball_y,ax
-	                     JL   NEG_Y
+	                     JLE   NEG_Y
 	                     
 	                     MOV  ax,WINDOW_HEIGHT
 	                     SUB  ax,WINDOW_BORDER
 	                     CMP  ball_y,ax
-	                     JG   NEG_Y
+	                     JGE   NEG_Y
     pop ax
 	                     ret
 
