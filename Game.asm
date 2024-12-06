@@ -459,7 +459,7 @@ DRAW_FRAME PROC
     ret
 DRAW_FRAME ENDP
 
-Draw_Ball Proc
+Draw_Ball PROC
     push ax
     push bx
     push cx
@@ -492,7 +492,7 @@ Draw_Ball Proc
 	                     ret
 Draw_Ball endp
 
-MOVE_BALL Proc 
+MOVE_BALL PROC 
     PUSH ax
 	                     mov  ax,ball_velocity_x
 	                     add  ball_x,ax
@@ -585,7 +585,7 @@ MOVE_BALL Proc
                 ret                                             
 MOVE_BALL endp
 
-DELETE_BALL Proc 
+DELETE_BALL PROC 
     push ax
     push bx
     push cx
