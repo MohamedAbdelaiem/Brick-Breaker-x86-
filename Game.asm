@@ -219,6 +219,14 @@ Draw_DestroyBrick PROC
 
         NEG ball_velocity_y
 
+        INC DESTROYED_BRICKS
+
+        CMP DESTROYED_BRICKS, 15
+        JNE EXIT_DESTROY
+        MOV AH,4ch
+        INT 21h
+
+        EXIT_DESTROY:   
 
         CALL DRAW_BRICK
     POP ax
@@ -319,14 +327,6 @@ GET_BRICK_X_Y ENDP
 ;description
 Destroy_Brick PROC
     CALL GET_BRICK_X_Y
-    ; CMP DESTROYED_BRICKS, 15
-    ; JGE EXIT_DESTROY
-    ; ret
-
-    ; EXIT_DESTROY:   
-    ;     MOV AH,4ch
-    ;     INT 21h
-    
     ret
 Destroy_Brick ENDP
 
