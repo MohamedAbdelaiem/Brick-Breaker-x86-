@@ -10,8 +10,8 @@ Y_Ruler_End dw 190
 X_Start_Bricks dw 20, 80, 140, 200, 260
 X_End_Bricks dw 60, 120, 180, 240, 300
 
-Y_Start_Bricks dw 30, 50, 70
-Y_End_Bricks dw 40, 60, 80
+Y_Start_Bricks dw 30, 50, 70, 30, 50, 70, 30, 50, 70, 30, 50, 70, 30, 50, 70
+Y_End_Bricks dw   40, 60, 80, 40, 60, 80, 40, 60, 80, 40, 60, 80, 40, 60, 80 
 
 X_Start dw 0
 X_End dw 0
@@ -221,7 +221,7 @@ Draw_DestroyBrick PROC
 
         INC DESTROYED_BRICKS
 
-        CMP DESTROYED_BRICKS, 15
+        CMP DESTROYED_BRICKS, 150
         JNE EXIT_DESTROY
         MOV AH,4ch
         INT 21h
@@ -245,7 +245,7 @@ GET_BRICK_Y PROC
         LEA DI, Y_End_Bricks
 
         mov ax, y
-        mov cx, 3
+        mov cx, 15
         Find_Y:
             CMP ax, [SI]
             JGE Check_Y_End
@@ -262,8 +262,10 @@ GET_BRICK_Y PROC
 
         GET_BRICK_Y_Answer:
             mov ax, [SI]
+            mov [si],0
             mov Y_Start_Destroyed_Brick, ax
             mov bx, [DI]
+            mov [di],0
             mov Y_End_Destroyed_Brick, bx
             CALL Draw_DestroyBrick
 
@@ -307,8 +309,10 @@ GET_BRICK_X_Y PROC
     
     GET_BRICK_X_Answer:
         mov ax, [SI]
+        ;mov [si],600
         mov X_Start_Destroyed_Brick, ax
         mov bx, [DI]
+        ;mov [di],600
         mov X_End_Destroyed_Brick, bx
         CALL GET_BRICK_Y
 
@@ -643,6 +647,7 @@ Main_Ball_loop ENDP
 
 INIT_GAME PROC
     SET_VIDEO_MODE
+     ;NEG ball_velocity_x
     CALL INIT_BRICKS
     mov color, 0dh
     CALL DRAW_RULER
