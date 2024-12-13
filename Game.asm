@@ -250,13 +250,13 @@ Draw_DestroyBrick PROC
         INC DESTROYED_BRICKS
 
         CMP DESTROYED_BRICKS, 150
-        JNE EXIT_DESTROY
-        MOV AH,4ch
-        INT 21h
-
-        EXIT_DESTROY:   
-
         CALL DRAW_BRICK
+        ; JNE EXIT_DESTROY
+        ; MOV AH,4ch
+        ; INT 21h
+
+    EXIT_DESTROY:   
+
     POP BX    
     POP SI    
     POP ax
