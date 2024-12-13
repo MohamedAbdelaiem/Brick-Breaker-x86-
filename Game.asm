@@ -10,8 +10,19 @@ Y_Ruler_End dw 190
 X_Start_Bricks dw 20, 80, 140, 200, 260
 X_End_Bricks dw 60, 120, 180, 240, 300
 
-Y_Start_Bricks dw 30, 50, 70, 30, 50, 70, 30, 50, 70, 30, 50, 70, 30, 50, 70
-Y_End_Bricks dw   40, 60, 80, 40, 60, 80, 40, 60, 80, 40, 60, 80, 40, 60, 80 
+; X_START_EACH_BRICK dw 20, 80, 140, 200, 260, 20, 80, 140, 200, 260, 20, 80, 140, 200, 260
+; X_END_EACH_BRICK dw 60, 120, 180, 240, 300, 60, 120, 180, 240, 300, 60, 120, 180, 240, 300
+
+; Y_START_EACH_BRICK dw 30, 30, 30, 30, 30, 50, 50, 50, 50, 50, 70, 70, 70, 70, 70
+; Y_END_EACH_BRICK DW 40, 40, 40, 40, 40, 60, 60, 60, 60, 60, 80, 80, 80, 80, 80
+
+MARK_DESTROYED_BRICKS DB "000000000000000"
+
+y_number dw 0
+x_number dw 0
+
+Y_Start_Bricks dw 30, 50, 70
+Y_End_Bricks dw   40, 60, 80
 
 X_Start dw 0
 X_End dw 0
@@ -206,6 +217,23 @@ INIT_BRICKS ENDP
 ;description
 Draw_DestroyBrick PROC
     PUSH ax
+    push si
+    PUSH BX
+        MOV BX, y_number
+        mov ax, bx
+        mov bx, 5
+        MUL bx
+        ADD AX, x_number
+
+        LEA SI, MARK_DESTROYED_BRICKS
+        ADD SI,AX
+        mov bx, 0
+        CMP BYTE PTR [SI], '0'
+
+        JZ destroy_this
+        JNZ EXIT_DESTROY
+
+    destroy_this:
         mov color, 0
         mov ax, X_Start_Destroyed_Brick
         mov X_Start, ax
@@ -217,18 +245,22 @@ Draw_DestroyBrick PROC
         mov ax, Y_End_Destroyed_Brick
         mov Y_End, ax
 
+        MOV BYTE PTR [SI], '1'
+
         NEG ball_velocity_y
 
         INC DESTROYED_BRICKS
 
-        CMP DESTROYED_BRICKS, 150
-        JNE EXIT_DESTROY
-        MOV AH,4ch
-        INT 21h
-
-        EXIT_DESTROY:   
-
+        CMP DESTROYED_BRICKS, 15
         CALL DRAW_BRICK
+        ; JNE EXIT_DESTROY
+        ; MOV AH,4ch
+        ; INT 21h
+
+    EXIT_DESTROY:   
+
+    POP BX    
+    POP SI    
     POP ax
     ret
 Draw_DestroyBrick ENDP
@@ -240,12 +272,16 @@ GET_BRICK_Y PROC
     PUSH BX
     PUSH AX
 
+    mov y_number, 0
+
+
         ; get X_Start and X_End
         LEA SI, Y_Start_Bricks
-        LEA DI, Y_End_Bricks
+        LEA DI, Y_End_Bricks    
+
 
         mov ax, y
-        mov cx, 15
+        mov cx, 3
         Find_Y:
             CMP ax, [SI]
             JGE Check_Y_End
@@ -256,16 +292,17 @@ GET_BRICK_Y PROC
             JLE GET_BRICK_Y_Answer
             ADD SI, 2
             ADD DI, 2
+            inc y_number
             LOOP Find_Y
         
         JMP GET_BRICK_Y_Destroy_Exit
 
         GET_BRICK_Y_Answer:
             mov ax, [SI]
-            mov [si],0
+            ; mov [si],0
             mov Y_Start_Destroyed_Brick, ax
             mov bx, [DI]
-            mov [di],0
+            ; mov [di],0
             mov Y_End_Destroyed_Brick, bx
             CALL Draw_DestroyBrick
 
@@ -273,8 +310,10 @@ GET_BRICK_Y PROC
     POP ax
     POP BX
     POP CX
-    POP SI
     POP DI
+    POP SI
+    
+    mov y_number, 0
 
     ret
 GET_BRICK_Y ENDP
@@ -286,6 +325,8 @@ GET_BRICK_X_Y PROC
     PUSH CX
     PUSH BX
     PUSH AX
+
+    mov x_number, 0
 
     ; get X_Start and X_End
     LEA SI, X_Start_Bricks
@@ -303,16 +344,17 @@ GET_BRICK_X_Y PROC
         JLE GET_BRICK_X_Answer
         ADD SI, 2
         ADD DI, 2
+        inc x_number
         LOOP Find_X
 
     JMP GET_BRICK_X_Answer_Destroy_Exit
     
     GET_BRICK_X_Answer:
         mov ax, [SI]
-        ;mov [si],600
+        ; mov [si],0
         mov X_Start_Destroyed_Brick, ax
         mov bx, [DI]
-        ;mov [di],600
+        ; mov [di],0
         mov X_End_Destroyed_Brick, bx
         CALL GET_BRICK_Y
 
@@ -324,7 +366,7 @@ GET_BRICK_X_Y PROC
     POP CX
     POP SI
     POP DI
-
+    mov x_number, 0
     ret
 GET_BRICK_X_Y ENDP
 
