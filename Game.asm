@@ -16,7 +16,7 @@ X_End_Bricks dw 60, 120, 180, 240, 300
 ; Y_START_EACH_BRICK dw 30, 30, 30, 30, 30, 50, 50, 50, 50, 50, 70, 70, 70, 70, 70
 ; Y_END_EACH_BRICK DW 40, 40, 40, 40, 40, 60, 60, 60, 60, 60, 80, 80, 80, 80, 80
 
-MARK_DESTROYED_BRICKS DB 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+MARK_DESTROYED_BRICKS DB "000000000000000"
 
 y_number dw 0
 x_number dw 0
@@ -219,17 +219,19 @@ Draw_DestroyBrick PROC
     PUSH ax
     push si
     PUSH BX
-        MOV BX,y_number
-        mov ax,BX
-        mov bx,5
-        mul bx
-        add ax,x_number
-        LEA SI,MARK_DESTROYED_BRICKS
-        ADD SI,AX
+        MOV BX, y_number
+        mov ax, bx
+        mov bx, 5
+        MUL bx
+        ADD AX, x_number
 
-        CMP [SI], 0
-        JE destroy_this
-        JNE EXIT_DESTROY
+        LEA SI, MARK_DESTROYED_BRICKS
+        ADD SI,AX
+        mov bx, 0
+        CMP BYTE PTR [SI], '0'
+
+        JZ destroy_this
+        JNZ EXIT_DESTROY
 
     destroy_this:
         mov color, 0
@@ -243,13 +245,13 @@ Draw_DestroyBrick PROC
         mov ax, Y_End_Destroyed_Brick
         mov Y_End, ax
 
-        MOV [SI],1
+        MOV BYTE PTR [SI], '1'
 
         NEG ball_velocity_y
 
         INC DESTROYED_BRICKS
 
-        CMP DESTROYED_BRICKS, 150
+        CMP DESTROYED_BRICKS, 15
         CALL DRAW_BRICK
         ; JNE EXIT_DESTROY
         ; MOV AH,4ch
