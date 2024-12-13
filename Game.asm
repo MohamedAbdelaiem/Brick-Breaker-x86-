@@ -43,7 +43,7 @@ color db 0fh
 
 x dw 0
 y dw 0
-DESTROYED_BRICKS DW 0
+DESTROYED_BRICKS Db 0
 
     time_aux        DB 0
 	ball_x          DW 160
@@ -251,11 +251,12 @@ Draw_DestroyBrick PROC
 
         INC DESTROYED_BRICKS
 
-        CMP DESTROYED_BRICKS, 15
         CALL DRAW_BRICK
-        ; JNE EXIT_DESTROY
-        ; MOV AH,4ch
-        ; INT 21h
+        CMP DESTROYED_BRICKS, 0fh
+        JNE EXIT_DESTROY
+        
+         MOV AH,4ch
+         INT 21h
 
     EXIT_DESTROY:   
 
