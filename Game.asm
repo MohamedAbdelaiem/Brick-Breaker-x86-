@@ -49,8 +49,8 @@ DESTROYED_BRICKS DW 0
 	ball_x          DW 160
 	ball_y          DW 170
 	ball_size       DW 5
-	ball_velocity_x DW 01h
-	ball_velocity_y DW 01h
+	ball_velocity_x DW 02h
+	ball_velocity_y DW 02h
     WINDOW_WIDTH    DW 320
 	WINDOW_HEIGHT   DW 200
 	WINDOW_BORDER   DW 5
@@ -251,11 +251,11 @@ Draw_DestroyBrick PROC
 
         INC DESTROYED_BRICKS
 
-        CMP DESTROYED_BRICKS, 15
         CALL DRAW_BRICK
-        ; JNE EXIT_DESTROY
-        ; MOV AH,4ch
-        ; INT 21h
+        CMP DESTROYED_BRICKS, 15
+        JNE EXIT_DESTROY
+        MOV AH,4ch
+        INT 21h
 
     EXIT_DESTROY:   
 
