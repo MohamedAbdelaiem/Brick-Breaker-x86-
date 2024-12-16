@@ -19,6 +19,29 @@ ClearLowerScreen MACRO
     
 ENDM ClearLowerScreen
 
+SCROLL_UPPER_SCREEN MACRO
+    mov ah, 6
+    mov al, 1
+    mov bh, 9h
+    mov ch, 0
+    mov cl, 0
+    mov dh, 12
+    mov dl, 79
+    int 10h
+ENDM SCROLL_UPPER_SCREEN
+
+SCROLL_LOWER_SCREEN MACRO
+    mov ah, 6
+    mov al, 1
+    mov bh, 30h
+    mov ch, 13
+    mov cl, 0
+    mov dh, 24
+    mov dl, 79
+    int 10h
+ENDM SCROLL_LOWER_SCREEN
+
+
 
 SaveCursorS MACRO
     mov ah, 3h
@@ -120,10 +143,7 @@ Main proc
         jnz INCREMENT
         
         OverFlow:
-        ClearUpperScreen
-        mov XposS, 0
-        mov YposS, 0
-        SetCursor XposS, YposS
+        SCROLL_UPPER_SCREEN
         jmp PRINT
 
         INCREMENT:
@@ -139,7 +159,7 @@ Main proc
         CHECKY:
         cmp YposS, 11
         jnz PRINT
-        ClearUpperScreen
+        SCROLL_UPPER_SCREEN
         mov XposS, 0
         mov YposS, 0
         SetCursor XposS, YposS
@@ -201,10 +221,7 @@ Main proc
         jnz YR
 
         XR:
-        ClearLowerScreen
-        mov XposR, 0
-        mov YposR, 12
-        SetCursor XposR, YposR
+        SCROLL_LOWER_SCREEN
         jmp PRINTR
 
 
@@ -221,7 +238,7 @@ Main proc
         CHECKYR:
         cmp YposR, 24
         jnz PRINTR
-        ClearLowerScreen
+        SCROLL_LOWER_SCREEN
         mov XposR, 0
         mov YposR, 12
         SetCursor XposR, yposR
