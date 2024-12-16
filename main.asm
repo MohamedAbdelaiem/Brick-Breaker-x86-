@@ -108,8 +108,6 @@ Main proc
 
      CLEARSCREEN:   
 
-        ; Make sure it is Text-Mode
-
       ClearUpperScreen
       ClearLowerScreen
       SetCursor 0, 0
@@ -161,7 +159,7 @@ Main proc
         jnz PRINT
         SCROLL_UPPER_SCREEN
         mov XposS, 0
-        mov YposS, 0
+        mov YposS, 11
         SetCursor XposS, YposS
 
     PRINT:
@@ -240,7 +238,7 @@ Main proc
         jnz PRINTR
         SCROLL_LOWER_SCREEN
         mov XposR, 0
-        mov YposR, 12
+        mov YposR, 13
         SetCursor XposR, yposR
 
         PRINTR:
