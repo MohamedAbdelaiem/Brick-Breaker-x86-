@@ -257,5 +257,5 @@ exit:
     int 21h 
 
 Main endp
-end
+end Main
 
