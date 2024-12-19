@@ -1,5 +1,3 @@
-public CHAT_MAIN
-
 ClearUpperScreen MACRO
     mov ax,060Dh
     mov bh,09h
@@ -81,7 +79,7 @@ YposR DB 0Dh
 
 .code
 
-CHAT_MAIN proc
+Main proc
     mov ax, @data
     mov ds, ax
 
@@ -109,6 +107,8 @@ CHAT_MAIN proc
 
 
      CLEARSCREEN:   
+
+        ; Make sure it is Text-Mode
 
       ClearUpperScreen
       ClearLowerScreen
@@ -161,7 +161,7 @@ CHAT_MAIN proc
         jnz PRINT
         SCROLL_UPPER_SCREEN
         mov XposS, 0
-        mov YposS, 11
+        mov YposS, 0
         SetCursor XposS, YposS
 
     PRINT:
@@ -240,7 +240,7 @@ CHAT_MAIN proc
         jnz PRINTR
         SCROLL_LOWER_SCREEN
         mov XposR, 0
-        mov YposR, 13
+        mov YposR, 12
         SetCursor XposR, yposR
 
         PRINTR:
@@ -258,6 +258,6 @@ exit:
     mov ah, 4ch
     int 21h 
 
-CHAT_MAIN endp
-end CHAT_MAIN
+Main endp
+end
 
