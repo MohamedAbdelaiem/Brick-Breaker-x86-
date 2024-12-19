@@ -699,7 +699,7 @@ INIT_GAME PROC
     ret
 INIT_GAME ENDP
 
-CLEAR_SCREEN Proc NEAR
+CLEAR_SCREEN PROC NEAR
 	; Open graphical mode 13h (320x200, 256 colors)
     push ax
     push bx
