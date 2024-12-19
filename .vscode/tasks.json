@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Assemble with TASM in DOSBox",
+            "type": "shell",
+            "command": "D:\\DOSBox-0.74-3\\DOSBox.exe",  // Path to DOSBox executable
+            "args": [
+                "-c", "mount C D:\\Brick-Breaker-x86-",
+                "-c", "C:",
+                "-c", "TASM.EXE *.asm",
+                "-c", "LINK.EXE ab3z.obj game.obj",
+                "-c", "ab3z.exe",
+             
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}
