@@ -543,9 +543,13 @@ MOVE_BALL PROC
                          MOV AX,ball_y
                          ADD AX,ball_size
                          CMP AX,WINDOW_HEIGHT
-                         JGE  CLOSE_BALL
-                         CMP AX,Y_Ruler_Start
-                         JGE CHECK_x_START_Ruler
+                        JGE  CLOSE_BALL_2  
+
+                        CMP AX, Y_Ruler_2_Start
+                        JGE CHECK_barrier
+
+                        CMP AX,Y_Ruler_Start
+                        JGE CHECK_x_START_Ruler
                          
                          
 	                     
@@ -577,6 +581,10 @@ MOVE_BALL PROC
 	                     NEG  ball_velocity_x
                          pop ax
 	                     ret
+
+CLOSE_BALL_2: 
+jmp CLOSE_BALL
+
 	NEG_Y:               
 	                     NEG  ball_velocity_y
                          pop ax
@@ -591,6 +599,13 @@ MOVE_BALL PROC
                        CMP AX,X_Ruler_End
                        JLE NEG_X_Y 
                        JMP cmp_border 
+
+
+    CHECK_barrier:
+                        mov ax,ball_y
+                        CMP AX,Y_Ruler_Start
+                        JGE NEG_X_Y
+                        ret 
     NEG_X_Y:
                 ; NEG ball_velocity_x
                 NEG ball_velocity_y
@@ -654,7 +669,8 @@ Main_Ball_loop PROC
         CALL Draw_Ball
         CALL DRAW_FRAME
         mov color, 0dh
-        CALL DRAW_RULER
+        ; CALL DRAW_RULER
+         CALL DRAW_RULER_2
 
     pop dx
     pop cx
@@ -686,8 +702,8 @@ INIT_GAME_MULT ENDP
 
 CLEAR_SCREEN PROC NEAR
 	; Open graphical mode 13h (320x200, 256 colors)
-    push ax
-    push bx
+  push ax
+  push bx
 	mov  al, 13h
 	mov  ah, 0
 	int  10h
@@ -784,29 +800,29 @@ MOVE_RULER_2_RIHGT PROC
 
         mov ax ,WINDOW_WIDTH
         sub ax , WINDOW_BORDER
-        CMP X_Ruler_End, ax
+        CMP X_Ruler_2_End, ax
         JGE RIGHT_RULER_2_EXIT
 
         MOV color, 0
-        mov ax, X_Ruler_Start
+        mov ax, X_Ruler_2_Start
         mov X_Start, ax
 
-        mov ax, X_Ruler_End
+        mov ax, X_Ruler_2_End
         mov X_End, ax
-        CALL DRAW_RULER
+        CALL DRAW_RULER_2
 
         mov color, 0dh
 
 
-        ADD X_Ruler_Start, 5
-        ADD X_Ruler_End, 5
-        mov ax, X_Ruler_Start
+        ADD X_Ruler_2_Start, 5
+        ADD X_Ruler_2_End, 5
+        mov ax, X_Ruler_2_Start
         mov X_Start, ax
 
-        mov ax, X_Ruler_End
+        mov ax, X_Ruler_2_End
         mov X_End, ax
 
-    CALL DRAW_RULER
+    CALL DRAW_RULER_2
 
     RIGHT_RULER_2_EXIT:
 
@@ -823,28 +839,28 @@ MOVE_RULER_2_LEFT PROC
     push ax
 
         mov ax , WINDOW_BORDER
-        CMP X_Ruler_Start, ax
+        CMP X_Ruler_2_Start, ax
         JLE LEFT_RULER_2_EXIT
 
         MOV color, 0
-        mov ax, X_Ruler_Start
+        mov ax, X_Ruler_2_Start
         mov X_Start, ax
 
-        mov ax, X_Ruler_End
+        mov ax, X_Ruler_2_End
         mov X_End, ax
-        CALL DRAW_RULER
+        CALL DRAW_RULER_2
 
         mov color, 0dh
 
-        SUB X_Ruler_Start, 5
-        SUB X_Ruler_End, 5
-        mov ax, X_Ruler_Start
+        SUB X_Ruler_2_Start, 5
+        SUB X_Ruler_2_End, 5
+        mov ax, X_Ruler_2_Start
         mov X_Start, ax
 
-        mov ax, X_Ruler_End
+        mov ax, X_Ruler_2_End
         mov X_End, ax
 
-        CALL DRAW_RULER
+        CALL DRAW_RULER_2
 
     LEFT_RULER_2_EXIT:
     pop ax
@@ -896,15 +912,16 @@ skipKeyPressStartLOOP:
         mov ah, 00h        ; Get key press
         int 16h
         cmp ah, 4Bh        ; Check if left arrow key
-        je MOVE_LEFT_1
-        cmp ah, 4Dh        ; Check if right arrow key
-        je MOVE_RIGHT_1
-
-        cmp ah, 61h        ; Check if left arrow key
         je MOVE_LEFT_2
-        cmp ah, 64h        ; Check if right arrow key
+        cmp ah, 4Dh        ; Check if right arrow key
         je MOVE_RIGHT_2
 
+       cmp al, 'a'        ; Check if 'a' 
+      ;  je MOVE_LEFT_2
+      je NEG_X_2
+       cmp al, 'd'        ; Check if 'd' 
+      ;  je MOVE_RIGHT_2
+        je NEG_Y_2
 
         SkipKeyPress:
             jmp Rulerloop
@@ -931,8 +948,11 @@ skipKeyPressStartLOOP:
         mov ah,1
         jmp Rulerloop
 
+        NEG_X_2:
+        NEG ball_velocity_x
 
-
+        NEG_Y_2:
+        NEG ball_velocity_y
      
 
     JMP MAIN_EXIT
