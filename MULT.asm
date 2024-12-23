@@ -1,4 +1,4 @@
-public MAIN
+public MULTI_MAIN
 
 .model large
 .stack 100h
@@ -948,7 +948,7 @@ ret
 
 GAME_LOOP_MULT ENDP
 
-MAIN PROC
+MULTI_MAIN PROC
     mov ax, @data
     mov ds, ax
 
@@ -964,5 +964,5 @@ MAIN PROC
     mov ah,4ch
     int 21h
 
-MAIN ENDP
-END MAIN
+MULTI_MAIN ENDP
+END MULTI_MAIN
