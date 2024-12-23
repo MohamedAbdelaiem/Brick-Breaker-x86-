@@ -9,8 +9,7 @@ X_Ruler_End dw 190
 Y_Ruler_Start dw 185
 Y_Ruler_End dw 190
 
-
-
+RECIEVED_VALUE db 0
 
 X_Ruler_2_Start dw 250
 X_Ruler_2_End dw 310
@@ -858,17 +857,173 @@ MOVE_RULER_2_LEFT PROC
     ret
 MOVE_RULER_2_LEFT ENDP
 
+;description
+INIT_SEND PROC
+
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+
+    ; initinalize COM
+    ;Set Divisor Latch Access Bit
+    mov dx,3fbh 			; Line Control Register
+    mov al,10000000b		;Set Divisor Latch Access Bit
+    out dx,al				;Out it
+    ;Set LSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f8h			
+    mov al,0ch			
+    out dx,al
+
+    ;Set MSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f9h
+    mov al,00h
+    out dx,al
+
+    ;Set port configuration
+    mov dx,3fbh
+    mov al,00011011b
+    out dx,al
+
+    ;Check that Transmitter Holding Register is Empty
+        mov dx , 3FDH		; Line Status Register
+
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+
+    ret
+
+INIT_SEND ENDP
+
+;description
+INIT_RECIEVE PROC
+    ; initinalize COM
+    ;Set Divisor Latch Access Bit
+    mov dx,3fbh 			; Line Control Register
+    mov al,10000000b		;Set Divisor Latch Access Bit
+    out dx,al				;Out it
+    ;Set LSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f8h			
+    mov al,0ch			
+    out dx,al
+
+    ;Set MSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f9h
+    mov al,00h
+    out dx,al
+
+    ;Set port configuration
+    mov dx,3fbh
+    mov al,00011011b
+    out dx,al
+
+            ; mov ah,0h     ;read the char to see if it is esc
+            ; Int 16h
+            ; cmp al,1Bh
+
+            ; mov ah, 09 
+            ; mov dx, offset messsage2
+            ; int 21h
+
+            ; mov ah,0AH   ; read the string      
+            ; mov dx,offset InDATA                  
+            ; int 21h 
+
+            ; mov ah, 9         ;display the string
+            ; mov dx, offset InDATA+2
+            ; int 21h  
+
+            ; mov ah, 9         ;get to the next line
+            ; mov dx, offset emptystr
+            ; int 21h 
+
+    ret
+INIT_RECIEVE ENDP
+
+
+;description
+CHECK_RECIEVE_STATUS PROC
+    
+
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+
+    ;Check that Data Ready from UART
+
+    mov dx , 3FDH		; Line Status Register
+    in al , dx 
+    AND al , 1
+    JZ CHKINCHAR     ; if there is not char in uart go check for key pressed
+
+    ;If Ready read the VALUE in Receive data register
+    mov dx , 03F8H
+    in al , dx
+    mov RECIEVED_VALUE, al
+    ; al has the data
+
+    CHKINCHAR:
+            mov ah,01h     ; check if key is pressed
+            mov al,0
+            Int 16h
+            cmp al,0h
+
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+        
+    ret
+
+CHECK_RECIEVE_STATUS ENDP
+
+;description
+CHECK_SEND_STATE PROC
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    mov bl, ah
+    ; AGAIN: 
+    ;     In al , dx 			;Read Line Status
+    ;     AND al , 00100000b
+    ;     JZ AGAIN
+
+    ;If empty put the VALUE in Transmit data register
+    mov dx , 3F8H		; Transmit data register
+    mov al, bl
+    out dx , al
+
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+
+    ret
+CHECK_SEND_STATE ENDP
+
 GAME_LOOP_MULT PROC
 
     CALL INIT_GAME_MULT
+    CALL INIT_SEND
+    CALL INIT_RECIEVE
+
     PUSH AX
     PUSH BX
     PUSH CX
     PUSH DX
 
      startLoop:
+
+        CALL CHECK_RECIEVE_STATUS
+
         mov ah, 00h        ; Get key press
         int 16h
+
+        CALL CHECK_SEND_STATE
 
         ; Check if the key pressed is Spacebar (ASCII code 0x20)
         cmp al, 20h        ; Compare with 0x20 (Spacebar), use al for ASCII value
@@ -876,10 +1031,6 @@ GAME_LOOP_MULT PROC
 
 skipKeyPressStartLOOP:
         jmp startLoop      ; If no key pressed, continue checking for key presses
-
-
-    
-
 
     Rulerloop:
         
@@ -890,15 +1041,17 @@ skipKeyPressStartLOOP:
 
         mov ah, 00h        ; Get key press
         int 16h
+
+
         cmp ah, 4Bh        ; Check if left arrow key
         je MOVE_LEFT_1
         cmp ah, 4Dh        ; Check if right arrow key
         je MOVE_RIGHT_1
 
-       cmp al, 'a'        ; Check if 'a' 
+       cmp RECIEVED_VALUE, 'a'        ; Check if 'a' 
        je MOVE_LEFT_2
     ;   je NEG_X_2
-       cmp al, 'd'        ; Check if 'd' 
+       cmp RECIEVED_VALUE, 'd'        ; Check if 'd' 
        je MOVE_RIGHT_2
         ; je NEG_Y_2
 
@@ -914,8 +1067,6 @@ skipKeyPressStartLOOP:
         CALL MOVE_RULER_1_LEFT
         mov ah,1
         jmp Rulerloop
-
-
 
         MOVE_RIGHT_2:
         CALL MOVE_RULER_2_RIHGT
