@@ -1,22 +1,27 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Assemble with TASM in DOSBox",
-            "type": "shell",
-            "command": "D:\\DOSBox-0.74-3\\DOSBox.exe",  // Path to DOSBox executable
-            "args": [
-                "-c", "mount C C:\\Users\\DELL\\Desktop\\ss",
-                "-c", "C:",
-                "-c", "TASM.EXE /m2 *.asm",
-                "-c", "LINK.EXE test.obj chat.obj game.obj",
-                "-c", "test.exe",
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": []
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Assemble with TASM in DOSBox",
+      "type": "shell",
+      "command": "D:\\DOSBox-0.74-3\\DOSBox.exe", // Path to DOSBox executable
+      "args": [
+        "-c",
+        "mount C C:\\Users\\AmrHany\\Documents\\GitHub\\Brick-Breaker-x86-",
+        "-c",
+        "C:",
+        "-c",
+        "TASM.EXE /m2 *.asm",
+        "-c",
+        "LINK.EXE test.obj chat.obj game.obj",
+        "-c",
+        "test.exe"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
 }
