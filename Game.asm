@@ -616,6 +616,7 @@ MOVE_BALL PROC
                        CMP AX,X_Ruler_End
                        JLE NEG_X_Y 
                        JMP cmp_border 
+
     NEG_X_Y:
                 ; NEG ball_velocity_x
                 NEG ball_velocity_y
