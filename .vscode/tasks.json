@@ -4,16 +4,16 @@
     {
       "label": "Assemble with TASM in DOSBox",
       "type": "shell",
-      "command": "D:\\Mozakara\\Hndsa\\Cmp2\\FirstTerm\\microProcessors\\DOSBox-0.74-3\\DOSBox.exe", // Path to DOSBox executable
+      "command": "C:\\Program Files (x86)\\DOSBox-0.74-3\\DOSBox.exe", // Path to DOSBox executable
       "args": [
         "-c",
-        "mount C D:\\Mozakara\\Hndsa\\Cmp2\\FirstTerm\\microProcessors\\project\\Brick-Breaker-x86",
+        "mount C D:\\computer\\Brick-Breaker-x86-",
         "-c",
         "C:",
         "-c",
         "TASM.EXE /m2 *.asm",
         "-c",
-        "LINK.EXE test.obj chat.obj game.obj MULT.obj tryagain.obj",
+        "LINK.EXE  test.obj chat.obj game.obj MULT.obj tryagain.obj test.obj chat.obj game.obj MULT.obj",
         "-c",
         "test.exe"
       ],

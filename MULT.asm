@@ -59,8 +59,8 @@ DESTROYED_BRICKS DW 0
 	ball_x          DW 160
 	ball_y          DW 170
 	ball_size       DW 5
-	ball_velocity_x DW 02h
-	ball_velocity_y DW 02h
+	ball_velocity_x DW 01h
+	ball_velocity_y DW 01h
     WINDOW_WIDTH    DW 320
 	WINDOW_HEIGHT   DW 200
 	WINDOW_BORDER   DW 5
@@ -266,7 +266,7 @@ Draw_DestroyBrick PROC
         JNE EXIT_DESTROY
         ;MOV AH,4ch
         ;INT 21h
-
+        MOV DESTROYED_BRICKS,0
         call tryagainDashboard
     EXIT_DESTROY:   
 
@@ -502,6 +502,7 @@ Draw_Ball endp
 CLOSE_BALL PROC
     ; mov ah,4ch
     ; int 21h
+    mov DESTROYED_BRICKS,0
     call tryagainDashboard
     pop ax
     ret
@@ -545,7 +546,8 @@ SKIP_CLOSE_BALL_LABEL:
 CHECK_barrier:
                     ;CMP AX, Y_Ruler_2_End
                     ;JLE CHECK_x_START_Ruler2
-                    CMP AX,Y_Ruler_Start
+                    MOV AX,ball_y
+                    ADD AX,ball_size
                     JGE CHECK_x_START_Ruler
                          
 	                     
@@ -611,11 +613,11 @@ CHECK_barrier:
     NEG_X_Y:
                 ; NEG ball_velocity_x
                 NEG ball_velocity_y
-                ; Move the ball slightly away from the ruler's edge
                 MOV AX, ball_velocity_x
                 ADD ball_x, AX
                 MOV AX, ball_velocity_y
                 ADD ball_y, AX
+                ; Move the ball slightly away from the ruler's edge
                 pop ax
                 ret
 
@@ -1035,11 +1037,14 @@ GAME_LOOP_MULT PROC
     CALL INIT_GAME_MULT
     CALL INIT_SEND
     CALL INIT_RECIEVE
+    
 
     PUSH AX
     PUSH BX
     PUSH CX
     PUSH DX
+
+
 
      startLoop:
 
@@ -1121,7 +1126,7 @@ GAME_LOOP_MULT PROC
      
 
     JMP MAIN_EXIT
-
+    mov DESTROYED_BRICKS,0
     POP DX
     POP CX
     POP BX
@@ -1137,6 +1142,43 @@ MULTI_MAIN PROC
     mov ds, ax
 
     mov ah, 0
+    mov ax,0
+    mov bx,0
+    mov cx,0
+    mov dx,0
+    mov si,0
+    mov di,0
+    mov ah, 0
+
+    MOV DESTROYED_BRICKS,0
+
+    mov ball_x, 160
+    mov ball_y, 170
+
+    mov x_number,0
+    mov y_number,0
+
+    MOV X_Ruler_Start, 130
+    MOV X_Ruler_End , 190
+    MOV Y_Ruler_Start , 185
+    MOV Y_Ruler_End , 190
+    
+    MOV X_Ruler_2_Start, 130
+    MOV X_Ruler_2_End , 190
+    MOV Y_Ruler_2_Start , 185
+    MOV Y_Ruler_2_End , 190
+
+    MOV ball_velocity_x, 01h
+    MOV ball_velocity_y, 01h
+
+    MOV CX,15
+    LEA SI,MARK_DESTROYED_BRICKS
+    LOOP1:
+        MOV BYTE PTR [SI], '0'
+        INC SI
+        LOOP LOOP1
+
+
 
     
     CALL GAME_LOOP_MULT
@@ -1144,7 +1186,7 @@ MULTI_MAIN PROC
     
 
     MAIN_EXIT:
-
+    mov DESTROYED_BRICKS,0
    call tryagainDashboard
 
 MULTI_MAIN ENDP

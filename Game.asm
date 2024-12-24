@@ -19,7 +19,8 @@ X_End_Bricks dw 60, 120, 180, 240, 300
 ; Y_START_EACH_BRICK dw 30, 30, 30, 30, 30, 50, 50, 50, 50, 50, 70, 70, 70, 70, 70
 ; Y_END_EACH_BRICK DW 40, 40, 40, 40, 40, 60, 60, 60, 60, 60, 80, 80, 80, 80, 80
 
-MARK_DESTROYED_BRICKS DB "000000000000000"
+MARK_DESTROYED_BRICKS DB "100000000000000"
+RESET_DESTROYED_BRICKS DB "000000000000000"
 
 y_number dw 0
 x_number dw 0
@@ -47,6 +48,7 @@ color db 0fh
 x dw 0
 y dw 0
 DESTROYED_BRICKS DW 0
+SCORE DW 0
 
     time_aux        DB 0
 	ball_x          DW 160
@@ -216,6 +218,90 @@ INIT_BRICKS PROC
     ret
 INIT_BRICKS ENDP
 
+DisplayNumber MACRO
+                push  ax
+                mov ax,SCORE
+                xor   cx,cx
+
+                mov   bx,10
+  divLoop:      
+                xor   dx,dx
+                div   bx
+                push  dx
+                inc   cx
+                cmp   ax,0
+                ja    divLoop
+
+                mov   ah, 0Eh
+  printLoop:    
+                pop   dx
+                mov   al,dl
+  ; add   al,'0'
+  ; integer 0 to 9 goes from 0000 to 1001
+  ; ascii '0' is 110000 so instead of adding
+  ; we could simply bitwise OR it
+                or    al,'0'
+                int   10h
+                loop  printLoop
+
+                pop   ax
+
+ENDM
+
+PRINT_SCORE PROC FAR
+    push ax
+    push bx
+    push cx
+    push dx
+
+    ; Set cursor position to (6, 6)
+    mov ah, 02h
+    mov bh, 0
+    mov dh, 1
+    mov dl, 1
+    int 10h
+
+    MOV DX,0
+
+
+
+    ; mov AX, SCORE
+    ; ; mov bL, 10
+    ; ; div bL
+    ; mov dL, AL
+    ; ; add dL, 30
+    ; mov ah, 2
+    ; int 21h
+
+    DisplayNumber
+
+
+    
+
+    ; mov ax, DESTROYED_BRICKS
+    ; mov bx, 10
+    ; div bx
+    ; mov dx, ax
+
+    ; mov DESTROYED_BRICKS, dx
+    ; add DESTROYED_BRICKS, 30
+    ; mov dx, DESTROYED_BRICKS
+    ; mov ah, 2
+    ; int 21h
+
+    ; mov DESTROYED_BRICKS, cx
+    ; add DESTROYED_BRICKS, 30
+    ; mov dx, DESTROYED_BRICKS
+    ; mov ah, 2
+    ; int 21h
+
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+PRINT_SCORE ENDP
+
 
 ;description
 Draw_DestroyBrick PROC
@@ -253,12 +339,16 @@ Draw_DestroyBrick PROC
         NEG ball_velocity_y
 
         INC DESTROYED_BRICKS
+        INC SCORE
 
+        CALL PRINT_SCORE
         CALL DRAW_BRICK
         CMP DESTROYED_BRICKS, 15
         JNE EXIT_DESTROY
         ;MOV AH,4ch
         ;INT 21h
+        mov DESTROYED_BRICKS,0
+        mov SCORE,0
         call tryagainDashboard
 
     EXIT_DESTROY:   
@@ -622,16 +712,18 @@ MOVE_BALL PROC
     NEG_X_Y:
                 ; NEG ball_velocity_x
                 NEG ball_velocity_y
-                ; Move the ball slightly away from the ruler's edge
                 MOV AX, ball_velocity_x
                 ADD ball_x, AX
                 MOV AX, ball_velocity_y
                 ADD ball_y, AX
+                ; Move the ball slightly away from the ruler's edge
                 pop ax
                 ret
     CLOSE_BALL:
                ; mov ah,4ch
                 ;int 21h
+                mov DESTROYED_BRICKS,0
+                mov SCORE,0
                 call tryagainDashboard
                 pop ax
                 ret                                             
@@ -693,9 +785,12 @@ ret
 Main_Ball_loop ENDP
 
 
+
+
 INIT_GAME PROC
     SET_VIDEO_MODE
      ;NEG ball_velocity_x
+    CALL PRINT_SCORE
     CALL INIT_BRICKS
     mov color, 0dh
     CALL DRAW_RULER
@@ -721,13 +816,65 @@ CLEAR_SCREEN PROC NEAR
 	                     ret
 CLEAR_SCREEN endp
 
+copyString PROC
+    ; Arguments: SI points to the source string, DI points to the destination buffer
+    ; Assumes source is null-terminated
+
+    CLD                  ; Clear direction flag to copy forward
+CopyLoop:
+    LODSB                ; Load byte from [SI] into AL, increment SI
+    STOSB                ; Store byte from AL into [DI], increment DI
+    CMP AL, 0            ; Check if null terminator (0) is reached
+    JNZ CopyLoop         ; If not null, continue copying
+
+    RET                  ; Return to caller
+copyString ENDP
+
 
 
 MAIN PROC
     mov ax, @data
     mov ds, ax
-
+    mov ax,0
+    mov bx,0
+    mov cx,0
+    mov dx,0
+    mov si,0
+    mov di,0
     mov ah, 0
+
+    mov ball_x, 160
+    mov ball_y, 170
+
+    mov x_number,0
+    mov y_number,0
+
+   MOV X_Ruler_Start, 130
+    MOV X_Ruler_End , 190
+    MOV Y_Ruler_Start , 185
+    MOV Y_Ruler_End , 190
+
+    MOV ball_velocity_x, 01h
+    MOV ball_velocity_y, 01h
+
+    MOV CX,15
+    LEA SI,MARK_DESTROYED_BRICKS
+    LOOP1:
+        MOV BYTE PTR [SI], '0'
+        INC SI
+        LOOP LOOP1
+
+    ; lea dx,MARK_DESTROYED_BRICKS
+    ; mov ah,9
+    ; int 21h
+    
+    mov si,0
+    mov di,0
+    MOV CX,0
+
+
+    mov DESTROYED_BRICKS, 0
+    mov SCORE, 0
     CALL INIT_GAME
 
 
@@ -792,6 +939,8 @@ skipKeyPressStartLOOP:
 
     ;mov ah,4ch
     ;int 21h
+    mov DESTROYED_BRICKS,0
+    mov SCORE,0
     call tryagainDashboard
 
 MAIN ENDP
