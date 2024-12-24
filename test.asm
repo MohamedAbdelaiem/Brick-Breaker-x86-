@@ -1,5 +1,7 @@
 extrn MAIN:FAR
 extrn CHAT_MAIN:FAR
+extrn MULTI_MAIN:FAR
+
 
 .model large
 .stack 100h
@@ -94,8 +96,10 @@ ab3z PROC
         JE BEGIN_GAME
 
         CMP al, 63h ;Esc
-        CALL CHAT_MAIN
         JE BEGIN_CHAT
+
+        cmp al, 'm'
+        JE BEGIN_MULTI
 
         CMP al, 1Bh ;Esc
         JE DashExit
@@ -109,7 +113,13 @@ ab3z PROC
 
     BEGIN_CHAT:
         CALL CHAT_MAIN
-        
+
+    JMP DashLoop
+
+    BEGIN_MULTI:
+        CALL MULTI_MAIN
+
+    JMP DashLoop
 
     DashExit:
 
