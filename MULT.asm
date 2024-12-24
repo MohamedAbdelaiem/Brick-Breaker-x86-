@@ -11,10 +11,10 @@ Y_Ruler_End dw 190
 
 RECIEVED_VALUE db 0
 
-X_Ruler_2_Start dw 250
-X_Ruler_2_End dw 310
-Y_Ruler_2_Start dw 160
-Y_Ruler_2_End dw 165
+X_Ruler_2_Start dw 130
+X_Ruler_2_End dw 190
+Y_Ruler_2_Start dw 185
+Y_Ruler_2_End dw 190
 
 X_Start_Bricks dw 20, 80, 140, 200, 260
 X_End_Bricks dw 60, 120, 180, 240, 300
@@ -540,10 +540,8 @@ SKIP_CLOSE_BALL_LABEL:
                         JL cmp_border
 
 CHECK_barrier:
-                    CMP AX, Y_Ruler_2_End
-                    JLE CHECK_x_START_Ruler2
-
-                    
+                    ;CMP AX, Y_Ruler_2_End
+                    ;JLE CHECK_x_START_Ruler2
                     CMP AX,Y_Ruler_Start
                     JGE CHECK_x_START_Ruler
                          
@@ -585,12 +583,11 @@ CHECK_barrier:
                        MOV AX,ball_x
                        CMP AX,X_Ruler_Start
                        JGE CHECK_x_end_Ruler
-                       JMP cmp_border
+                       Jmp CHECK_x_START_Ruler2
     CHECK_x_end_Ruler:
                        MOV AX,ball_x
                        CMP AX,X_Ruler_End
                        JLE NEG_X_Y 
-                       JMP cmp_border 
 
     CHECK_x_START_Ruler2:
                        MOV AX,ball_x
@@ -665,8 +662,8 @@ Main_Ball_loop PROC
         CALL Draw_Ball
         CALL DRAW_FRAME
         mov color, 0dh
-        ; CALL DRAW_RULER
-         CALL DRAW_RULER_2
+        CALL DRAW_RULER
+        CALL DRAW_RULER_2
 
     pop dx
     pop cx
@@ -983,6 +980,53 @@ INIT_RECIEVE PROC
     ret
 INIT_RECIEVE ENDP
 
+;description
+Recieve_START PROC
+    push ax
+    push BX
+    push cx
+    push dx
+
+getKEY:
+     mov ah, 00h        ; Get key press
+     int 16h
+        ; Check if the key pressed is Spacebar (ASCII code 0x20)
+    cmp al, 20h        ; Compare with 0x20 (Spacebar), use al for ASCII value
+    JNE getKEY
+    mov dx , 3FDH		; Line Status Register
+ LAGAIN:  
+    In al , dx 			;Read Line Status
+    AND al , 00100000b
+    JZ LAGAIN
+            ;If empty put the VALUE in Transmit data register
+            mov dx , 3F8H		; Transmit data register
+            mov al,20h
+            out dx , al
+
+      mov dx , 3FDH		; Line Status Register
+    LReceive:
+        in al , dx 
+        AND al , 1
+        JZ LReceive
+
+    ;If Ready read the VALUE in Receive data register
+            mov dx , 03F8H
+            in al , dx
+            cmp al,20h
+            
+            JE exitR
+            JNE LReceive
+
+
+exitR:
+    pop DX
+    pop cx
+    pop bx
+    pop AX
+    ret
+Recieve_START ENDP
+
+
 GAME_LOOP_MULT PROC
 
     CALL INIT_GAME_MULT
@@ -997,16 +1041,9 @@ GAME_LOOP_MULT PROC
      startLoop:
 
 
-        mov ah, 00h        ; Get key press
-        int 16h
-
-
-        ; Check if the key pressed is Spacebar (ASCII code 0x20)
-        cmp al, 20h        ; Compare with 0x20 (Spacebar), use al for ASCII value
-        je Rulerloop       ; Jump to Rulerloop if Spacebar is pressed
-
-skipKeyPressStartLOOP:
-        jmp startLoop      ; If no key pressed, continue checking for key presses
+       call Recieve_START
+;skipKeyPressStartLOOP:
+ ;       jmp startLoop      ; If no key pressed, continue checking for key presses
 
     Rulerloop:
         CALL Main_Ball_loop
