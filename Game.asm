@@ -1,3 +1,4 @@
+extrn tryagainDashboard:FAR
 public MAIN
 
 .model large
@@ -256,8 +257,9 @@ Draw_DestroyBrick PROC
         CALL DRAW_BRICK
         CMP DESTROYED_BRICKS, 15
         JNE EXIT_DESTROY
-        MOV AH,4ch
-        INT 21h
+        ;MOV AH,4ch
+        ;INT 21h
+        call tryagainDashboard
 
     EXIT_DESTROY:   
 
@@ -628,8 +630,9 @@ MOVE_BALL PROC
                 pop ax
                 ret
     CLOSE_BALL:
-                mov ah,4ch
-                int 21h
+               ; mov ah,4ch
+                ;int 21h
+                call tryagainDashboard
                 pop ax
                 ret                                             
 MOVE_BALL endp
@@ -787,8 +790,9 @@ skipKeyPressStartLOOP:
 
     MAIN_EXIT:
 
-    mov ah,4ch
-    int 21h
+    ;mov ah,4ch
+    ;int 21h
+    call tryagainDashboard
 
 MAIN ENDP
 END MAIN

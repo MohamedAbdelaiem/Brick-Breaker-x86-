@@ -1,3 +1,4 @@
+extrn tryagainDashboard:FAR
 public MULTI_MAIN
 
 .model large
@@ -58,8 +59,8 @@ DESTROYED_BRICKS DW 0
 	ball_x          DW 160
 	ball_y          DW 170
 	ball_size       DW 5
-	ball_velocity_x DW 01h
-	ball_velocity_y DW 01h
+	ball_velocity_x DW 02h
+	ball_velocity_y DW 02h
     WINDOW_WIDTH    DW 320
 	WINDOW_HEIGHT   DW 200
 	WINDOW_BORDER   DW 5
@@ -263,9 +264,10 @@ Draw_DestroyBrick PROC
         CALL DRAW_BRICK
         CMP DESTROYED_BRICKS, 15
         JNE EXIT_DESTROY
-        MOV AH,4ch
-        INT 21h
+        ;MOV AH,4ch
+        ;INT 21h
 
+        call tryagainDashboard
     EXIT_DESTROY:   
 
     POP BX    
@@ -498,8 +500,9 @@ Draw_Ball endp
 
 ;description
 CLOSE_BALL PROC
-    mov ah,4ch
-    int 21h
+    ; mov ah,4ch
+    ; int 21h
+    call tryagainDashboard
     pop ax
     ret
 CLOSE_BALL ENDP
@@ -533,7 +536,7 @@ MOVE_BALL PROC
                          ADD AX,ball_size
                          CMP AX,WINDOW_HEIGHT
                         JL SKIP_CLOSE_BALL_LABEL  
-                        ; CALL CLOSE_BALL
+                         CALL CLOSE_BALL
 SKIP_CLOSE_BALL_LABEL:
 
                         CMP AX, Y_Ruler_2_Start
@@ -1142,8 +1145,7 @@ MULTI_MAIN PROC
 
     MAIN_EXIT:
 
-    mov ah,4ch
-    int 21h
+   call tryagainDashboard
 
 MULTI_MAIN ENDP
 END MULTI_MAIN
