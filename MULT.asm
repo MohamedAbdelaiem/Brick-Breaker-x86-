@@ -1,4 +1,4 @@
-public MAIN
+public MULTI_MAIN
 
 .model large
 .stack 100h
@@ -8,6 +8,13 @@ X_Ruler_Start dw 130
 X_Ruler_End dw 190
 Y_Ruler_Start dw 185
 Y_Ruler_End dw 190
+
+RECIEVED_VALUE db 0
+
+X_Ruler_2_Start dw 250
+X_Ruler_2_End dw 310
+Y_Ruler_2_Start dw 160
+Y_Ruler_2_End dw 165
 
 X_Start_Bricks dw 20, 80, 140, 200, 260
 X_End_Bricks dw 60, 120, 180, 240, 300
@@ -389,87 +396,36 @@ DRAW_RULER PROC
         mov ax, X_Ruler_End
         mov X_End, ax
         
-        mov Y_Start, 185
-        mov Y_End, 190
+        mov ax, Y_Ruler_Start
+        mov Y_Start,ax
+
+        mov ax, Y_Ruler_End
+        mov Y_End, ax
 
         CALL DRAW_BRICK
     POP AX
     ret
 DRAW_RULER ENDP
-;description
 
-MOVE_RULER_RIHGT PROC
-    push ax
 
-        mov ax ,WINDOW_WIDTH
-        sub ax , WINDOW_BORDER
-        CMP X_Ruler_End, ax
-        JGE RIGHT_RULER_EXIT
-
-        MOV color, 0
-        mov ax, X_Ruler_Start
+DRAW_RULER_2 PROC
+    PUSH AX
+        mov ax, X_Ruler_2_Start
         mov X_Start, ax
 
-        mov ax, X_Ruler_End
+        mov ax, X_Ruler_2_End
         mov X_End, ax
-        CALL DRAW_RULER
+        
+        mov ax, Y_Ruler_2_Start
+        mov Y_Start,ax
 
-        mov color, 0dh
+        mov ax, Y_Ruler_2_End
+        mov Y_End, ax
 
-
-        ADD X_Ruler_Start, 5
-        ADD X_Ruler_End, 5
-        mov ax, X_Ruler_Start
-        mov X_Start, ax
-
-        mov ax, X_Ruler_End
-        mov X_End, ax
-
-    CALL DRAW_RULER
-
-    RIGHT_RULER_EXIT:
-
-    pop ax
+        CALL DRAW_BRICK
+    POP AX
     ret
-MOVE_RULER_RIHGT ENDP
-
-
-
-
-
-
-MOVE_RULER_LEFT PROC
-    push ax
-
-        mov ax , WINDOW_BORDER
-        CMP X_Ruler_Start, ax
-        JLE LEFT_RULER_EXIT
-
-        MOV color, 0
-        mov ax, X_Ruler_Start
-        mov X_Start, ax
-
-        mov ax, X_Ruler_End
-        mov X_End, ax
-        CALL DRAW_RULER
-
-        mov color, 0dh
-
-        SUB X_Ruler_Start, 5
-        SUB X_Ruler_End, 5
-        mov ax, X_Ruler_Start
-        mov X_Start, ax
-
-        mov ax, X_Ruler_End
-        mov X_End, ax
-
-        CALL DRAW_RULER
-
-    LEFT_RULER_EXIT:
-    pop ax
-    ret
-MOVE_RULER_LEFT ENDP
-
+DRAW_RULER_2 ENDP
 
 ; Draw Game Frame
 DRAW_FRAME PROC
@@ -540,6 +496,14 @@ Draw_Ball PROC
 	                     ret
 Draw_Ball endp
 
+;description
+CLOSE_BALL PROC
+    mov ah,4ch
+    int 21h
+    pop ax
+    ret
+CLOSE_BALL ENDP
+
 MOVE_BALL PROC 
     PUSH ax
 	                     mov  ax,ball_velocity_x
@@ -568,10 +532,20 @@ MOVE_BALL PROC
                          MOV AX,ball_y
                          ADD AX,ball_size
                          CMP AX,WINDOW_HEIGHT
-                         JGE  CLOSE_BALL
-                         CMP AX,Y_Ruler_Start
-                         JGE CHECK_x_START_Ruler
-                         
+                        JL SKIP_CLOSE_BALL_LABEL  
+                        ; CALL CLOSE_BALL
+SKIP_CLOSE_BALL_LABEL:
+
+                        CMP AX, Y_Ruler_2_Start
+                        JL cmp_border
+
+CHECK_barrier:
+                    CMP AX, Y_Ruler_2_End
+                    JLE CHECK_x_START_Ruler2
+
+                    
+                    CMP AX,Y_Ruler_Start
+                    JGE CHECK_x_START_Ruler
                          
 	                     
 	                cmp_border:     
@@ -602,6 +576,7 @@ MOVE_BALL PROC
 	                     NEG  ball_velocity_x
                          pop ax
 	                     ret
+
 	NEG_Y:               
 	                     NEG  ball_velocity_y
                          pop ax
@@ -617,6 +592,22 @@ MOVE_BALL PROC
                        JLE NEG_X_Y 
                        JMP cmp_border 
 
+    CHECK_x_START_Ruler2:
+                       MOV AX,ball_x
+                       CMP AX,X_Ruler_2_Start
+                       JGE CHECK_x_end_Ruler2
+                       JMP cmp_border
+    CHECK_x_end_Ruler2:
+                       MOV AX,ball_x
+                       CMP AX,X_Ruler_2_End
+                       JLE NEG_X_Y
+                       JMP cmp_border 
+
+    ; CHECK_barrier:
+    ;                     mov ax,ball_y
+    ;                     CMP AX,Y_Ruler_Start
+    ;                     JGE NEG_X_Y
+    ;                     ret 
     NEG_X_Y:
                 ; NEG ball_velocity_x
                 NEG ball_velocity_y
@@ -627,11 +618,7 @@ MOVE_BALL PROC
                 ADD ball_y, AX
                 pop ax
                 ret
-    CLOSE_BALL:
-                mov ah,4ch
-                int 21h
-                pop ax
-                ret                                             
+
 MOVE_BALL endp
 
 DELETE_BALL PROC 
@@ -667,8 +654,6 @@ DELETE_BALL PROC
 ret
 DELETE_BALL endp
 
-
-
 Main_Ball_loop PROC 
     push ax
     push bx
@@ -680,7 +665,8 @@ Main_Ball_loop PROC
         CALL Draw_Ball
         CALL DRAW_FRAME
         mov color, 0dh
-        CALL DRAW_RULER
+        ; CALL DRAW_RULER
+         CALL DRAW_RULER_2
 
     pop dx
     pop cx
@@ -689,60 +675,331 @@ Main_Ball_loop PROC
 ret
 Main_Ball_loop ENDP
 
-
-INIT_GAME PROC
+INIT_GAME_MULT PROC
     SET_VIDEO_MODE
      ;NEG ball_velocity_x
     CALL INIT_BRICKS
     mov color, 0dh
     CALL DRAW_RULER
+    mov color, 0dh
+    CALL DRAW_RULER_2
+
     CALL DRAW_FRAME
     CALL MOVE_BALL
 	call Draw_Ball
     ret
-INIT_GAME ENDP
+INIT_GAME_MULT ENDP
 
 CLEAR_SCREEN PROC NEAR
 	; Open graphical mode 13h (320x200, 256 colors)
-    push ax
-    push bx
-	                     mov  al, 13h
-	                     mov  ah, 0
-	                     int  10h
-
-	                     MOV  AH,0bh
-	                     mov  bx,00
-	                     int  10h
+  push ax
+  push bx
+	mov  al, 13h
+	mov  ah, 0
+	int  10h
+	MOV  AH,0bh
+	mov  bx,00
+	int  10h
     pop bx
     pop AX
-	                     ret
+	ret
 CLEAR_SCREEN endp
 
+MOVE_RULER_1_RIHGT PROC
+      push ax
+      push bx
+      push dx
+      push cx
+
+        mov ax ,WINDOW_WIDTH
+        sub ax , WINDOW_BORDER
+        CMP X_Ruler_End, ax
+        JGE RIGHT_RULER_EXIT
+
+        MOV color, 0
+        mov ax, X_Ruler_Start
+        mov X_Start, ax
+
+        mov ax, X_Ruler_End
+        mov X_End, ax
+        CALL DRAW_RULER
+
+        mov color, 0dh
 
 
-MAIN PROC
-    mov ax, @data
-    mov ds, ax
+        ADD X_Ruler_Start, 5
+        ADD X_Ruler_End, 5
+        mov ax, X_Ruler_Start
+        mov X_Start, ax
 
-    mov ah, 0
-    CALL INIT_GAME
+        mov ax, X_Ruler_End
+        mov X_End, ax
+
+    CALL DRAW_RULER
+
+    RIGHT_RULER_EXIT:
+
+    mov dx , 3FDH		; Line Status Register
+    ; AGAIN:  
+            In al , dx 			;Read Line Status
+            AND al , 00100000b
+
+    ;If empty put the VALUE in Transmit data register
+            mov dx , 3F8H		; Transmit data register
+            mov al,'d'
+            out dx , al 
+
+    pop cx
+    pop dx
+    pop bx
+    pop ax
+    ret
+MOVE_RULER_1_RIHGT ENDP
+
+MOVE_RULER_1_LEFT PROC
+    push ax
+    push bx
+    push dx
+    push cx
+
+        mov ax , WINDOW_BORDER
+        CMP X_Ruler_Start, ax
+        JLE LEFT_RULER_EXIT
+
+        MOV color, 0
+        mov ax, X_Ruler_Start
+        mov X_Start, ax
+
+        mov ax, X_Ruler_End
+        mov X_End, ax
+        CALL DRAW_RULER
+
+        mov color, 0dh
+
+        SUB X_Ruler_Start, 5
+        SUB X_Ruler_End, 5
+        mov ax, X_Ruler_Start
+        mov X_Start, ax
+
+        mov ax, X_Ruler_End
+        mov X_End, ax
+
+        CALL DRAW_RULER
+
+    LEFT_RULER_EXIT:
+
+    mov dx , 3FDH		; Line Status Register
+    ; AGAIN:  
+            In al , dx 			;Read Line Status
+            AND al , 00100000b
+
+    ;If empty put the VALUE in Transmit data register
+            mov dx , 3F8H		; Transmit data register
+            mov al,'a'
+            out dx , al 
+
+    pop cx
+    pop dx
+    pop bx
+    pop ax
+    ret
+MOVE_RULER_1_LEFT ENDP
+
+MOVE_RULER_2_RIHGT PROC
+    push ax
+    push bx
+    push dx
+    push cx
+
+    ;     mov dx , 3FDH		; Line Status Register
+    ;     in al , dx 
+    ;     AND al , 1
+    ;     JZ RIGHT_RULER_2_EXIT
+
+    ; ;If Ready read the VALUE in Receive data register
+    ;         mov dx , 03F8H
+    ;         in al , dx 
+    ;         CMP al, 'd'
+    ;         JNE RIGHT_RULER_2_EXIT
+
+        mov ax ,WINDOW_WIDTH
+        sub ax , WINDOW_BORDER
+        CMP X_Ruler_2_End, ax
+        JGE RIGHT_RULER_2_EXIT
+
+        MOV color, 0
+        mov ax, X_Ruler_2_Start
+        mov X_Start, ax
+
+        mov ax, X_Ruler_2_End
+        mov X_End, ax
+        CALL DRAW_RULER_2
+
+        mov color, 0dh
 
 
-    ; mov ax, 0FFFFh
-    ; int 16h
-    ; CMP ah, 4Dh
-    ; JE MOVE_RIGHT
+        ADD X_Ruler_2_Start, 5
+        ADD X_Ruler_2_End, 5
+        mov ax, X_Ruler_2_Start
+        mov X_Start, ax
 
-    ; mov x, 20
-    ; mov y, 35
+        mov ax, X_Ruler_2_End
+        mov X_End, ax
 
-    ; CALL Destroy_Brick
-    
-    ; mov ah,1
+    CALL DRAW_RULER_2
 
-    startLoop:
+    RIGHT_RULER_2_EXIT:
+
+    pop cx
+    pop dx
+    pop bx
+    pop ax
+    ret
+MOVE_RULER_2_RIHGT ENDP
+
+MOVE_RULER_2_LEFT PROC
+    push ax
+    push bx
+    push dx
+    push cx
+
+        mov ax , WINDOW_BORDER
+        CMP X_Ruler_2_Start, ax
+        JLE LEFT_RULER_2_EXIT
+
+        MOV color, 0
+        mov ax, X_Ruler_2_Start
+        mov X_Start, ax
+
+        mov ax, X_Ruler_2_End
+        mov X_End, ax
+        CALL DRAW_RULER_2
+
+        mov color, 0dh
+
+        SUB X_Ruler_2_Start, 5
+        SUB X_Ruler_2_End, 5
+        mov ax, X_Ruler_2_Start
+        mov X_Start, ax
+
+        mov ax, X_Ruler_2_End
+        mov X_End, ax
+
+        CALL DRAW_RULER_2
+
+    LEFT_RULER_2_EXIT:
+    pop cx
+    pop dx
+    pop bx
+    pop ax
+    ret
+MOVE_RULER_2_LEFT ENDP
+
+;description
+INIT_SEND PROC
+
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+
+    ; initinalize COM
+    ;Set Divisor Latch Access Bit
+    mov dx,3fbh 			; Line Control Register
+    mov al,10000000b		;Set Divisor Latch Access Bit
+    out dx,al				;Out it
+    ;Set LSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f8h			
+    mov al,0ch			
+    out dx,al
+
+    ;Set MSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f9h
+    mov al,00h
+    out dx,al
+
+    ;Set port configuration
+    mov dx,3fbh
+    mov al,00011011b
+    out dx,al
+
+    ; ;Check that Transmitter Holding Register is Empty
+    ;     mov dx , 3FDH		; Line Status Register
+
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+
+    ret
+
+INIT_SEND ENDP
+
+;description
+INIT_RECIEVE PROC
+    ; initinalize COM
+    ;Set Divisor Latch Access Bit
+    mov dx,3fbh 			; Line Control Register
+    mov al,10000000b		;Set Divisor Latch Access Bit
+    out dx,al				;Out it
+    ;Set LSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f8h			
+    mov al,0ch			
+    out dx,al
+
+    ;Set MSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f9h
+    mov al,00h
+    out dx,al
+
+    ;Set port configuration
+    mov dx,3fbh
+    mov al,00011011b
+    out dx,al
+
+        ; mov dx , 3FDH		; Line Status Register
+
+
+            ; mov ah,0h     ;read the char to see if it is esc
+            ; Int 16h
+            ; cmp al,1Bh
+
+            ; mov ah, 09 
+            ; mov dx, offset messsage2
+            ; int 21h
+
+            ; mov ah,0AH   ; read the string      
+            ; mov dx,offset InDATA                  
+            ; int 21h 
+
+            ; mov ah, 9         ;display the string
+            ; mov dx, offset InDATA+2
+            ; int 21h  
+
+            ; mov ah, 9         ;get to the next line
+            ; mov dx, offset emptystr
+            ; int 21h 
+
+    ret
+INIT_RECIEVE ENDP
+
+GAME_LOOP_MULT PROC
+
+    CALL INIT_GAME_MULT
+    CALL INIT_SEND
+    CALL INIT_RECIEVE
+
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+
+     startLoop:
+
+
         mov ah, 00h        ; Get key press
         int 16h
+
 
         ; Check if the key pressed is Spacebar (ASCII code 0x20)
         cmp al, 20h        ; Compare with 0x20 (Spacebar), use al for ASCII value
@@ -751,44 +1008,105 @@ MAIN PROC
 skipKeyPressStartLOOP:
         jmp startLoop      ; If no key pressed, continue checking for key presses
 
-
-    
-
-
     Rulerloop:
-        
         CALL Main_Ball_loop
+
+        mov dx , 3FDH		; Line Status Register
+        in al , dx 
+        AND al , 1
+        JZ CONTINUE_GAME_LOOP
+
+    ;If Ready read the VALUE in Receive data register
+            mov dx , 03F8H
+            in al , dx 
+            CMP al, 'a'
+            JE MOVE_SERIAL_RULER_LEFT
+            CMP al, 'd'
+            JE MOVE_SERIAL_RULER_RIGHT
+
+        JMP CONTINUE_GAME_LOOP
+
+        MOVE_SERIAL_RULER_RIGHT:
+            CALL MOVE_RULER_2_RIHGT
+        JMP CONTINUE_GAME_LOOP
+        MOVE_SERIAL_RULER_LEFT:
+            CALL MOVE_RULER_2_LEFT
+
+        CONTINUE_GAME_LOOP:    
+        
         mov ah, 01h        ; Check if a key is available
         int 16h
         jz SkipKeyPress    ; If no key pressed, skip key handling
-
         mov ah, 00h        ; Get key press
         int 16h
+        
+
         cmp ah, 4Bh        ; Check if left arrow key
-        je MOVE_LEFT
+        je MOVE_LEFT_1
         cmp ah, 4Dh        ; Check if right arrow key
-        je MOVE_RIGHT
+        je MOVE_RIGHT_1
+
+
 
         SkipKeyPress:
             jmp Rulerloop
 
-        MOVE_RIGHT:
-            CALL MOVE_RULER_RIHGT
-            mov ah,1
-            jmp Rulerloop
-
-        MOVE_LEFT:
-        CALL MOVE_RULER_LEFT
+        MOVE_RIGHT_1:
+        CALL MOVE_RULER_1_RIHGT
         mov ah,1
         jmp Rulerloop
+
+        MOVE_LEFT_1:
+        CALL MOVE_RULER_1_LEFT
+        mov ah,1
+        jmp Rulerloop
+
+        ; MOVE_RIGHT_2:
+        ; ; CALL MOVE_RULER_2_RIHGT
+        ; mov ah,1
+        ; jmp Rulerloop
+
+        ; MOVE_LEFT_2:
+        ; ; CALL MOVE_RULER_2_LEFT
+        ; mov ah,1
+        ; jmp Rulerloop
+
+        NEG_X_2:
+        NEG ball_velocity_x
+        JMP Rulerloop
+
+        NEG_Y_2:
+        NEG ball_velocity_y
+        JMP Rulerloop
      
 
     JMP MAIN_EXIT
+
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+
+
+ret
+
+GAME_LOOP_MULT ENDP
+
+MULTI_MAIN PROC
+    mov ax, @data
+    mov ds, ax
+
+    mov ah, 0
+
+    
+    CALL GAME_LOOP_MULT
+
+    
 
     MAIN_EXIT:
 
     mov ah,4ch
     int 21h
 
-MAIN ENDP
-END MAIN
+MULTI_MAIN ENDP
+END MULTI_MAIN
