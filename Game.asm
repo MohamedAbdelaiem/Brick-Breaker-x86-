@@ -47,6 +47,7 @@ color db 0fh
 x dw 0
 y dw 0
 DESTROYED_BRICKS DW 0
+SCORE DW "0"
 
     time_aux        DB 0
 	ball_x          DW 160
@@ -253,6 +254,8 @@ Draw_DestroyBrick PROC
         NEG ball_velocity_y
 
         INC DESTROYED_BRICKS
+        INC SCORE
+        CALL PRINT_SCORE
 
         CALL DRAW_BRICK
         CMP DESTROYED_BRICKS, 15
@@ -692,10 +695,63 @@ Main_Ball_loop PROC
 ret
 Main_Ball_loop ENDP
 
+PRINT_SCORE PROC
+    push ax
+    push bx
+    push cx
+    push dx
+
+    ; Set cursor position to (6, 6)
+    mov ah, 02h
+    mov bh, 0
+    mov dh, 1
+    mov dl, 1
+    int 10h
+
+    MOV DX,0
+
+
+
+    mov AX, SCORE
+    ; mov bL, 10
+    ; div bL
+    mov dL, AL
+    ; add dL, 30
+    mov ah, 2
+    int 21h
+
+
+    
+
+    ; mov ax, DESTROYED_BRICKS
+    ; mov bx, 10
+    ; div bx
+    ; mov dx, ax
+
+    ; mov DESTROYED_BRICKS, dx
+    ; add DESTROYED_BRICKS, 30
+    ; mov dx, DESTROYED_BRICKS
+    ; mov ah, 2
+    ; int 21h
+
+    ; mov DESTROYED_BRICKS, cx
+    ; add DESTROYED_BRICKS, 30
+    ; mov dx, DESTROYED_BRICKS
+    ; mov ah, 2
+    ; int 21h
+
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+PRINT_SCORE ENDP
+
 
 INIT_GAME PROC
     SET_VIDEO_MODE
      ;NEG ball_velocity_x
+    CALL PRINT_SCORE
     CALL INIT_BRICKS
     mov color, 0dh
     CALL DRAW_RULER
