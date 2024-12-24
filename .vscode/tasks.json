@@ -13,7 +13,9 @@
         "-c",
         "TASM.EXE /m2 *.asm",
         "-c",
+
         "LINK.EXE  test.obj chat.obj game.obj MULT.obj tryagain.obj test.obj chat.obj game.obj MULT.obj",
+
         "-c",
         "test.exe"
       ],
