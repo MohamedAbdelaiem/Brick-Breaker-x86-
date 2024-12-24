@@ -10,6 +10,7 @@ Y_Ruler_Start dw 185
 Y_Ruler_End dw 190
 
 
+RECIEVED_VALUE db 0
 
 
 X_Ruler_2_Start dw 250
@@ -429,23 +430,6 @@ DRAW_RULER_2 PROC
 DRAW_RULER_2 ENDP
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-;description
-
-
 ; Draw Game Frame
 DRAW_FRAME PROC
     push ax
@@ -552,7 +536,9 @@ MOVE_BALL PROC
                          ADD AX,ball_size
                          CMP AX,WINDOW_HEIGHT
                         JL SKIP_CLOSE_BALL_LABEL  
+
                         CALL CLOSE_BALL
+
 SKIP_CLOSE_BALL_LABEL:
 
                         CMP AX, Y_Ruler_2_Start
@@ -727,6 +713,11 @@ CLEAR_SCREEN endp
 MOVE_RULER_1_RIHGT PROC
       push ax
 
+      push bx
+      push dx
+      push cx
+
+
         mov ax ,WINDOW_WIDTH
         sub ax , WINDOW_BORDER
         CMP X_Ruler_End, ax
@@ -755,12 +746,31 @@ MOVE_RULER_1_RIHGT PROC
 
     RIGHT_RULER_EXIT:
 
+
+    mov dx , 3FDH		; Line Status Register
+    ; AGAIN:  
+            In al , dx 			;Read Line Status
+            AND al , 00100000b
+
+    ;If empty put the VALUE in Transmit data register
+            mov dx , 3F8H		; Transmit data register
+            mov al,'d'
+            out dx , al 
+
+    pop cx
+    pop dx
+    pop bx
     pop ax
     ret
 MOVE_RULER_1_RIHGT ENDP
 
 MOVE_RULER_1_LEFT PROC
     push ax
+
+    push bx
+    push dx
+    push cx
+
 
         mov ax , WINDOW_BORDER
         CMP X_Ruler_Start, ax
@@ -787,12 +797,44 @@ MOVE_RULER_1_LEFT PROC
         CALL DRAW_RULER
 
     LEFT_RULER_EXIT:
+
+
+    mov dx , 3FDH		; Line Status Register
+    ; AGAIN:  
+            In al , dx 			;Read Line Status
+            AND al , 00100000b
+
+    ;If empty put the VALUE in Transmit data register
+            mov dx , 3F8H		; Transmit data register
+            mov al,'a'
+            out dx , al 
+
+    pop cx
+    pop dx
+    pop bx
+
     pop ax
     ret
 MOVE_RULER_1_LEFT ENDP
 
 MOVE_RULER_2_RIHGT PROC
     push ax
+
+    push bx
+    push dx
+    push cx
+
+    ;     mov dx , 3FDH		; Line Status Register
+    ;     in al , dx 
+    ;     AND al , 1
+    ;     JZ RIGHT_RULER_2_EXIT
+
+    ; ;If Ready read the VALUE in Receive data register
+    ;         mov dx , 03F8H
+    ;         in al , dx 
+    ;         CMP al, 'd'
+    ;         JNE RIGHT_RULER_2_EXIT
+
 
         mov ax ,WINDOW_WIDTH
         sub ax , WINDOW_BORDER
@@ -822,12 +864,22 @@ MOVE_RULER_2_RIHGT PROC
 
     RIGHT_RULER_2_EXIT:
 
+
+    pop cx
+    pop dx
+    pop bx
+
     pop ax
     ret
 MOVE_RULER_2_RIHGT ENDP
 
 MOVE_RULER_2_LEFT PROC
     push ax
+
+    push bx
+    push dx
+    push cx
+
 
         mov ax , WINDOW_BORDER
         CMP X_Ruler_2_Start, ax
@@ -854,19 +906,120 @@ MOVE_RULER_2_LEFT PROC
         CALL DRAW_RULER_2
 
     LEFT_RULER_2_EXIT:
+
+    pop cx
+    pop dx
+    pop bx
+
     pop ax
     ret
 MOVE_RULER_2_LEFT ENDP
 
+
+;description
+INIT_SEND PROC
+
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+
+    ; initinalize COM
+    ;Set Divisor Latch Access Bit
+    mov dx,3fbh 			; Line Control Register
+    mov al,10000000b		;Set Divisor Latch Access Bit
+    out dx,al				;Out it
+    ;Set LSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f8h			
+    mov al,0ch			
+    out dx,al
+
+    ;Set MSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f9h
+    mov al,00h
+    out dx,al
+
+    ;Set port configuration
+    mov dx,3fbh
+    mov al,00011011b
+    out dx,al
+
+    ; ;Check that Transmitter Holding Register is Empty
+    ;     mov dx , 3FDH		; Line Status Register
+
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+
+    ret
+
+INIT_SEND ENDP
+
+;description
+INIT_RECIEVE PROC
+    ; initinalize COM
+    ;Set Divisor Latch Access Bit
+    mov dx,3fbh 			; Line Control Register
+    mov al,10000000b		;Set Divisor Latch Access Bit
+    out dx,al				;Out it
+    ;Set LSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f8h			
+    mov al,0ch			
+    out dx,al
+
+    ;Set MSB byte of the Baud Rate Divisor Latch register.
+    mov dx,3f9h
+    mov al,00h
+    out dx,al
+
+    ;Set port configuration
+    mov dx,3fbh
+    mov al,00011011b
+    out dx,al
+
+        ; mov dx , 3FDH		; Line Status Register
+
+
+            ; mov ah,0h     ;read the char to see if it is esc
+            ; Int 16h
+            ; cmp al,1Bh
+
+            ; mov ah, 09 
+            ; mov dx, offset messsage2
+            ; int 21h
+
+            ; mov ah,0AH   ; read the string      
+            ; mov dx,offset InDATA                  
+            ; int 21h 
+
+            ; mov ah, 9         ;display the string
+            ; mov dx, offset InDATA+2
+            ; int 21h  
+
+            ; mov ah, 9         ;get to the next line
+            ; mov dx, offset emptystr
+            ; int 21h 
+
+    ret
+INIT_RECIEVE ENDP
+
 GAME_LOOP_MULT PROC
 
     CALL INIT_GAME_MULT
+    CALL INIT_SEND
+    CALL INIT_RECIEVE
+
+
     PUSH AX
     PUSH BX
     PUSH CX
     PUSH DX
 
      startLoop:
+
+
+
         mov ah, 00h        ; Get key press
         int 16h
 
@@ -878,29 +1031,47 @@ skipKeyPressStartLOOP:
         jmp startLoop      ; If no key pressed, continue checking for key presses
 
 
-    
-
-
     Rulerloop:
-        
         CALL Main_Ball_loop
+
+        mov dx , 3FDH		; Line Status Register
+        in al , dx 
+        AND al , 1
+        JZ CONTINUE_GAME_LOOP
+
+    ;If Ready read the VALUE in Receive data register
+            mov dx , 03F8H
+            in al , dx 
+            CMP al, 'a'
+            JE MOVE_SERIAL_RULER_LEFT
+            CMP al, 'd'
+            JE MOVE_SERIAL_RULER_RIGHT
+
+        JMP CONTINUE_GAME_LOOP
+
+        MOVE_SERIAL_RULER_RIGHT:
+            CALL MOVE_RULER_2_RIHGT
+        JMP CONTINUE_GAME_LOOP
+        MOVE_SERIAL_RULER_LEFT:
+            CALL MOVE_RULER_2_LEFT
+
+        CONTINUE_GAME_LOOP:    
+        
         mov ah, 01h        ; Check if a key is available
         int 16h
         jz SkipKeyPress    ; If no key pressed, skip key handling
-
         mov ah, 00h        ; Get key press
         int 16h
+        
+
+
         cmp ah, 4Bh        ; Check if left arrow key
         je MOVE_LEFT_1
         cmp ah, 4Dh        ; Check if right arrow key
         je MOVE_RIGHT_1
 
-       cmp al, 'a'        ; Check if 'a' 
-       je MOVE_LEFT_2
-    ;   je NEG_X_2
-       cmp al, 'd'        ; Check if 'd' 
-       je MOVE_RIGHT_2
-        ; je NEG_Y_2
+
+
 
         SkipKeyPress:
             jmp Rulerloop
@@ -916,16 +1087,16 @@ skipKeyPressStartLOOP:
         jmp Rulerloop
 
 
+        ; MOVE_RIGHT_2:
+        ; ; CALL MOVE_RULER_2_RIHGT
+        ; mov ah,1
+        ; jmp Rulerloop
 
-        MOVE_RIGHT_2:
-        CALL MOVE_RULER_2_RIHGT
-        mov ah,1
-        jmp Rulerloop
+        ; MOVE_LEFT_2:
+        ; ; CALL MOVE_RULER_2_LEFT
+        ; mov ah,1
+        ; jmp Rulerloop
 
-        MOVE_LEFT_2:
-        CALL MOVE_RULER_2_LEFT
-        mov ah,1
-        jmp Rulerloop
 
         NEG_X_2:
         NEG ball_velocity_x
