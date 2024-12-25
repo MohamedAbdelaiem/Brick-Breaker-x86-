@@ -57,6 +57,7 @@ SCORE DW 0
 	ball_size       DW 5
 	ball_velocity_x DW 01h
 	ball_velocity_y DW 01h
+    Power_velocity  DW 01h
     WINDOW_WIDTH    DW 320
 	WINDOW_HEIGHT   DW 200
 	WINDOW_BORDER   DW 5
@@ -137,6 +138,39 @@ DRAW_BRICK PROC
     ret
 
 DRAW_BRICK ENDP
+
+Draw_Power PROC
+    push ax
+    push bx
+    push cx
+    push dx
+	
+	                     mov  cx, ball_x          	; X coordinate
+	                     mov  dx, ball_y          	; Y coordinate
+	
+	
+	Draw_Power_Horziontal:
+	                     mov  ah, 0Ch             	; Function to plot pixel
+	                     mov  al, 01h             
+	                     mov  bh, 0               	; Page number 0
+	                     int  10h
+	                     inc  cx
+	                     mov  ax,cx
+	                     sub  ax,ball_x
+	                     cmp  ax,ball_size
+	                     JNG  Draw_Power_Horziontal
+	                     mov  cx,ball_x
+	                     inc  dx
+	                     mov  ax,dx
+	                     sub  ax,ball_y
+	                     cmp  ax,ball_size
+	                     JNG  Draw_Power_Horziontal
+	pop dx
+    pop cx
+    pop bx
+    pop ax
+	                     ret
+Draw_Power endp
 
 DRAW_BRICK_ROW PROC
     push SI
@@ -303,18 +337,66 @@ PRINT_SCORE PROC FAR
     ret
 PRINT_SCORE ENDP
 
+delay PROC
+    ; Input: BX = duration in milliseconds
+
+    PUSH CX               ; Save registers
+    PUSH DX
+
+    ; Each loop iteration is approximately 1 millisecond
+delay_loop:
+    MOV CX, 1193          ; Approximate count for 1 millisecond delay
+inner_loop:
+    LOOP inner_loop
+    DEC BX
+    JNZ delay_loop
+
+    POP DX                ; Restore registers
+    POP CX
+    RET
+delay ENDP
  ;description
 beeb_Sound PROC
     push ax
     push dx
 
-    mov ah, 0Eh     ; BIOS Teletype Output subfunction
-    mov al, 07h     ; ASCII BEL character
-    int 10h         ; ; Call BIOS interrupt
+    CMP AX, 0                  ; Check if frequency is zero
+    JE no_sound                ; Skip if no frequency provided
 
+    ; Initialize the PIT clock frequency (1193180) as a 32-bit value
+    MOV DX, 18h                ; Upper 16 bits (1193180 / 65536 = 18)
+    MOV AX, 2E04h              ; Lower 16 bits (1193180 MOD 65536 = 0x2E04)
+
+    ; Divide DX:AX by the frequency (AX contains the frequency)
+    DIV AX                     ; AX = PIT divisor (16-bit result)
+
+    ; Set PIT Channel 2 to square wave generator mode
+    MOV AL, 10110110b          ; Set mode: Channel 2, square wave
+    OUT 43h, AL
+
+    ; Send divisor to PIT
+    MOV AL, AH                 ; High byte of divisor
+    OUT 42h, AL
+    MOV AL, AL                 ; Low byte of divisor
+    OUT 42h, AL
+
+    ; Enable PC speaker
+    IN AL, 61h
+    OR AL, 00000011b           ; Set bits 0 and 1 to enable speaker
+    OUT 61h, AL
+
+    ; Wait for the duration
+    CALL delay                 ; Pass BX to delay (defined below)
+
+    ; Disable PC speaker
+    IN AL, 61h
+    AND AL, 11111100b          ; Clear bits 0 and 1 to disable speaker
+    OUT 61h, AL
+
+no_sound:
     pop dx
     pop ax
-    ret
+    RET
 beeb_Sound ENDP
 ;description
 Draw_DestroyBrick PROC
@@ -350,14 +432,17 @@ Draw_DestroyBrick PROC
         MOV BYTE PTR [SI], '1'
 
         NEG ball_velocity_y
-
+        MOV AX, 1000          ; Frequency = 500 Hz
+        MOV BX, 200          ; Duration = 200 ms
         CALL beeb_Sound
         INC DESTROYED_BRICKS
+
         INC SCORE
 
 
         CALL PRINT_SCORE
         CALL DRAW_BRICK
+        ;call Draw_Power
         CMP DESTROYED_BRICKS, 15
         JNE EXIT_DESTROY
         ;MOV AH,4ch
@@ -626,7 +711,7 @@ Draw_Ball PROC
 	
 	Draw_Ball_Horziontal:
 	                     mov  ah, 0Ch             	; Function to plot pixel
-	                     mov  al, 0Ah             	; White color (0Fh)
+	                     mov  al, 0Ah             
 	                     mov  bh, 0               	; Page number 0
 	                     int  10h
 	                     inc  cx
@@ -869,7 +954,7 @@ MAIN PROC
     MOV Y_Ruler_End , 190
 
     MOV ball_velocity_x, 01h
-    MOV ball_velocity_y, 01h
+    MOV ball_velocity_y, 02h
 
     MOV CX,15
     LEA SI,MARK_DESTROYED_BRICKS
