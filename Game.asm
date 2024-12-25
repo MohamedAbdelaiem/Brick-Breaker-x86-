@@ -303,7 +303,19 @@ PRINT_SCORE PROC FAR
     ret
 PRINT_SCORE ENDP
 
+ ;description
+beeb_Sound PROC
+    push ax
+    push dx
 
+    mov ah, 0Eh     ; BIOS Teletype Output subfunction
+    mov al, 07h     ; ASCII BEL character
+    int 10h         ; ; Call BIOS interrupt
+
+    pop dx
+    pop ax
+    ret
+beeb_Sound ENDP
 ;description
 Draw_DestroyBrick PROC
     PUSH ax
@@ -339,6 +351,7 @@ Draw_DestroyBrick PROC
 
         NEG ball_velocity_y
 
+        CALL beeb_Sound
         INC DESTROYED_BRICKS
         INC SCORE
 
