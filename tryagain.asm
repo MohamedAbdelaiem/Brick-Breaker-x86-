@@ -3,7 +3,8 @@ extrn MAINGAMEDASH:FAR
 .model small
 .stack 100h
 .data
-TryAgain db "Try Again (t)$"
+TryAgain db "Try Again (Enter)$"
+exit db "Exit (Esc)$"
 
 .code
 
@@ -54,7 +55,14 @@ tryagainDashboard PROC FAR
 
                  mov       ah, 9
                  LEA       dx, TryAgain
-                 int       21h                 
+                 int       21h          
+
+                 SetCursor 13, 10
+
+                 mov       ah, 9
+                 LEA       dx, exit
+                 int       21h     
+
     tDashLoop:    
                  mov       ah, 0
                  int       16h

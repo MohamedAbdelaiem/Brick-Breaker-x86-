@@ -50,7 +50,7 @@ Y_End_Destroyed_Brick dw 0
 
 color_palette db 0bh, 0eh, 0ch
 color db 0fh
-
+SCORE dw 0
 x dw 0
 y dw 0
 DESTROYED_BRICKS DW 0
@@ -60,7 +60,7 @@ DESTROYED_BRICKS DW 0
 	ball_y          DW 170
 	ball_size       DW 5
 	ball_velocity_x DW 01h
-	ball_velocity_y DW 01h
+	ball_velocity_y DW 02h
     WINDOW_WIDTH    DW 320
 	WINDOW_HEIGHT   DW 200
 	WINDOW_BORDER   DW 5
@@ -223,6 +223,90 @@ INIT_BRICKS PROC
     ret
 INIT_BRICKS ENDP
 
+DisplayNumber MACRO
+                push  ax
+                mov ax,SCORE
+                xor   cx,cx
+
+                mov   bx,10
+  divLoop:      
+                xor   dx,dx
+                div   bx
+                push  dx
+                inc   cx
+                cmp   ax,0
+                ja    divLoop
+
+                mov   ah, 0Eh
+  printLoop:    
+                pop   dx
+                mov   al,dl
+  ; add   al,'0'
+  ; integer 0 to 9 goes from 0000 to 1001
+  ; ascii '0' is 110000 so instead of adding
+  ; we could simply bitwise OR it
+                or    al,'0'
+                int   10h
+                loop  printLoop
+
+                pop   ax
+
+ENDM
+
+PRINT_SCORE PROC FAR
+    push ax
+    push bx
+    push cx
+    push dx
+
+    ; Set cursor position to (6, 6)
+    mov ah, 02h
+    mov bh, 0
+    mov dh, 1
+    mov dl, 1
+    int 10h
+
+    MOV DX,0
+
+
+
+    ; mov AX, SCORE
+    ; ; mov bL, 10
+    ; ; div bL
+    ; mov dL, AL
+    ; ; add dL, 30
+    ; mov ah, 2
+    ; int 21h
+
+    DisplayNumber
+
+
+    
+
+    ; mov ax, DESTROYED_BRICKS
+    ; mov bx, 10
+    ; div bx
+    ; mov dx, ax
+
+    ; mov DESTROYED_BRICKS, dx
+    ; add DESTROYED_BRICKS, 30
+    ; mov dx, DESTROYED_BRICKS
+    ; mov ah, 2
+    ; int 21h
+
+    ; mov DESTROYED_BRICKS, cx
+    ; add DESTROYED_BRICKS, 30
+    ; mov dx, DESTROYED_BRICKS
+    ; mov ah, 2
+    ; int 21h
+
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+PRINT_SCORE ENDP
+
 
 ;description
 Draw_DestroyBrick PROC
@@ -260,6 +344,8 @@ Draw_DestroyBrick PROC
         NEG ball_velocity_y
 
         INC DESTROYED_BRICKS
+        inc SCORE
+        call PRINT_SCORE
 
         CALL DRAW_BRICK
         CMP DESTROYED_BRICKS, 15
@@ -668,6 +754,7 @@ Main_Ball_loop PROC
         CALL DRAW_FRAME
         mov color, 0dh
         CALL DRAW_RULER
+        mov color ,09h
         CALL DRAW_RULER_2
 
     pop dx
@@ -689,6 +776,7 @@ INIT_GAME_MULT PROC
     CALL DRAW_FRAME
     CALL MOVE_BALL
 	call Draw_Ball
+    CALL PRINT_SCORE
     ret
 INIT_GAME_MULT ENDP
 
@@ -837,7 +925,7 @@ MOVE_RULER_2_RIHGT PROC
         mov X_End, ax
         CALL DRAW_RULER_2
 
-        mov color, 0dh
+        mov color, 09h
 
 
         ADD X_Ruler_2_Start, 5
@@ -877,7 +965,7 @@ MOVE_RULER_2_LEFT PROC
         mov X_End, ax
         CALL DRAW_RULER_2
 
-        mov color, 0dh
+        mov color, 09h
 
         SUB X_Ruler_2_Start, 5
         SUB X_Ruler_2_End, 5
@@ -1037,6 +1125,7 @@ GAME_LOOP_MULT PROC
     CALL INIT_GAME_MULT
     CALL INIT_SEND
     CALL INIT_RECIEVE
+
     
 
     PUSH AX
@@ -1169,7 +1258,10 @@ MULTI_MAIN PROC
     MOV Y_Ruler_2_End , 190
 
     MOV ball_velocity_x, 01h
-    MOV ball_velocity_y, 01h
+    MOV ball_velocity_y, 02h
+
+     mov color, 0dh
+     mov SCORE , 0
 
     MOV CX,15
     LEA SI,MARK_DESTROYED_BRICKS
