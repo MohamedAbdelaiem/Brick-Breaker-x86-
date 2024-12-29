@@ -439,6 +439,15 @@ Draw_DestroyBrick PROC
 
         INC SCORE
 
+        CMP DESTROYED_BRICKS, 7
+        JE INCREASE_VEL
+        JMP CONTINUE_DESTROYING
+
+        INCREASE_VEL:
+            mov ball_velocity_x, 01h
+            mov ball_velocity_y, 01h
+
+        CONTINUE_DESTROYING:
 
         CALL PRINT_SCORE
         CALL DRAW_BRICK
@@ -1017,6 +1026,9 @@ skipKeyPressStartLOOP:
         je MOVE_LEFT
         cmp ah, 4Dh        ; Check if right arrow key
         je MOVE_RIGHT
+
+        CMP al, 1BH 
+        je MAIN_EXIT 
 
         SkipKeyPress:
             jmp Rulerloop
